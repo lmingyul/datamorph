@@ -14,6 +14,18 @@ export type ChatStyle = "bubble" | "document";
 // 定义字体大小类型
 export type FontSize = "small" | "medium" | "large";
 
+// 主题配色：slate 冷灰靛蓝（默认）、warm 暖纸青墨、mono 墨黑单色
+export type ColorTheme = "slate" | "warm" | "mono";
+
+// 设置存储异步加载，本地另存一份作为初始值，避免启动时先闪一下默认配色
+export const COLOR_THEME_STORAGE_KEY = "datamorph-color-theme";
+
+function readInitialColorTheme(): ColorTheme {
+  const stored = localStorage.getItem(COLOR_THEME_STORAGE_KEY);
+
+  return stored === "warm" || stored === "mono" ? stored : "slate";
+}
+
 // 定义 Monaco 编辑器 CDN 类型
 export type MonacoEditorCDN = "local" | "cdn";
 
@@ -27,6 +39,7 @@ export interface SettingsState {
   chatStyle: ChatStyle;
   // 字体大小设置
   fontSize: FontSize;
+  colorTheme: ColorTheme;
   // 解码器设置
   timestampDecoderEnabled: boolean;
   timestampTimeZone: string;
@@ -50,6 +63,7 @@ export interface SettingsState {
   setMonacoEditorCDN: (value: MonacoEditorCDN) => void;
   setChatStyle: (value: ChatStyle) => void;
   setFontSize: (value: FontSize) => void;
+  setColorTheme: (value: ColorTheme) => void;
   setTimestampDecoderEnabled: (value: boolean) => void;
   setTimestampTimeZone: (value: string) => void;
   setBase64DecoderEnabled: (value: boolean) => void;
@@ -76,6 +90,7 @@ export const useSettingsStore = create<SettingsState>()(
         monacoEditorCDN: "local",
         chatStyle: "bubble",
         fontSize: "medium",
+        colorTheme: readInitialColorTheme(),
         timestampDecoderEnabled: true,
         timestampTimeZone: LOCAL_TIME_ZONE,
         base64DecoderEnabled: true,
@@ -96,6 +111,7 @@ export const useSettingsStore = create<SettingsState>()(
           set({ monacoEditorCDN: value }),
         setChatStyle: (value: ChatStyle) => set({ chatStyle: value }),
         setFontSize: (value: FontSize) => set({ fontSize: value }),
+        setColorTheme: (value: ColorTheme) => set({ colorTheme: value }),
         setTimestampDecoderEnabled: (value: boolean) =>
           set({ timestampDecoderEnabled: value }),
         setTimestampTimeZone: (value: string) =>
@@ -150,6 +166,7 @@ const getPersistedSettings = (settings: SettingsState) => ({
   monacoEditorCDN: settings.monacoEditorCDN,
   chatStyle: settings.chatStyle,
   fontSize: settings.fontSize,
+  colorTheme: settings.colorTheme,
   timestampDecoderEnabled: settings.timestampDecoderEnabled,
   timestampTimeZone: settings.timestampTimeZone,
   base64DecoderEnabled: settings.base64DecoderEnabled,

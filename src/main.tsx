@@ -16,6 +16,7 @@ import UtoolsListener from "@/services/utoolsListener";
 import { PWAUpdateManager } from "@/components/pwa/PWAUpdateManager";
 import { TimeZoneDialog } from "@/components/setting/TimeZoneSelector";
 import { ThemeColorManager } from "@/components/ThemeColorManager";
+import { ColorThemeManager } from "@/components/ColorThemeManager";
 
 // 初始化存储系统
 const initializeStorage = async () => {
@@ -58,6 +59,7 @@ async function startApp() {
       >
         <Provider>
           <ThemeColorManager />
+          <ColorThemeManager />
           <TimeZoneDialog />
           <FontSizeManager />
           <DefaultLayout>

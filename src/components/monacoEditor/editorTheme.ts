@@ -1,22 +1,49 @@
 import type * as monaco from "monaco-editor";
 
+const LIGHT_THEME = "datamorph-light";
 const DARK_THEME = "datamorph-dark";
 
 export function getMonacoTheme(theme: string): string {
   if (theme === "vs-dark") return DARK_THEME;
-  if (theme === "vs-light") return "vs";
+  if (theme === "vs-light") return LIGHT_THEME;
   return theme;
 }
 
-/** Read the app's dark tokens even when Monaco first loads in light mode. */
+let registeredInstance: typeof monaco | null = null;
+
 export function registerEditorTheme(instance: typeof monaco): void {
+  registeredInstance = instance;
+  instance.editor.defineTheme(LIGHT_THEME, readTheme("light", "vs"));
+  instance.editor.defineTheme(DARK_THEME, readTheme("dark", "vs-dark"));
+}
+
+/** 配色切换后重新读取 CSS 变量；Monaco 尚未加载时无需处理，加载时会读到最新值。 */
+export function refreshEditorTheme(): void {
+  if (registeredInstance) registerEditorTheme(registeredInstance);
+}
+
+/**
+ * Read one theme's tokens through a probe element, so both themes can be
+ * built no matter which one the page is showing. Monaco only accepts 6-digit
+ * hex, but the production CSS minifier shortens values (#ffffff -> #fff), so
+ * every value is resolved by the browser and re-serialized.
+ */
+function readTheme(
+  themeClass: "light" | "dark",
+  base: monaco.editor.BuiltinTheme,
+): monaco.editor.IStandaloneThemeData {
   const probe = document.createElement("div");
-  probe.className = "dark";
+  probe.className = themeClass;
   probe.hidden = true;
   document.body.append(probe);
   try {
     const styles = getComputedStyle(probe);
-    const color = (name: string) => styles.getPropertyValue(`--${name}`).trim();
+    const color = (name: string) => {
+      probe.style.color = styles.getPropertyValue(`--${name}`).trim();
+      const [r, g, b] = styles.color.match(/\d+/g)!.map(Number);
+
+      return `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+    };
     const background = color("background");
     const foreground = color("foreground");
     const surface = color("surface");
@@ -39,8 +66,8 @@ export function registerEditorTheme(instance: typeof monaco): void {
       foreground: value.slice(1),
     });
 
-    instance.editor.defineTheme(DARK_THEME, {
-      base: "vs-dark",
+    return {
+      base,
       inherit: true,
       rules: [
         token("", foreground),
@@ -154,7 +181,7 @@ export function registerEditorTheme(instance: typeof monaco): void {
         foreground: foreground,
         descriptionForeground: subtle,
         "icon.foreground": subtle,
-        "widget.shadow": "#00000040",
+        "widget.shadow": themeClass === "dark" ? "#00000040" : "#0000001f",
         "input.background": background,
         "input.foreground": foreground,
         "input.border": input,
@@ -201,7 +228,7 @@ export function registerEditorTheme(instance: typeof monaco): void {
         "diffEditor.unchangedRegionBackground": surface,
         "diffEditor.unchangedRegionForeground": subtle,
       },
-    });
+    };
   } finally {
     probe.remove();
   }

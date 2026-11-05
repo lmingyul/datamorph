@@ -26,8 +26,8 @@ const TONE_CLASSES: Record<SettingTone, string> = {
   success: "bg-success text-white dark:text-background",
   warning: "bg-warning text-white dark:text-background",
   danger: "bg-danger text-white dark:text-background",
-  info: "bg-blue-500 text-white",
-  violet: "bg-purple-500 text-white",
+  info: "bg-tone-info text-white",
+  violet: "bg-tone-violet text-white",
   neutral: "bg-muted-foreground text-background",
 };
 
@@ -229,7 +229,7 @@ export function ChoiceCard({
       onKeyDown={(e) => e.key === "Enter" && onSelect()}
     >
       {badge && selected ? (
-        <div className="absolute right-2 top-2 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-primary text-white">
+        <div className="absolute right-2 top-2 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-primary text-primary-foreground">
           <Icon icon="solar:check-circle-bold" width={14} />
         </div>
       ) : null}

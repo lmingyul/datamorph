@@ -27,6 +27,8 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-divider: var(--border);
+  --color-tone-info: var(--tone-info);
+  --color-tone-violet: var(--tone-violet);
   --color-vscode-dark: var(--background);
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -36,61 +38,175 @@
     "Microsoft YaHei", sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
-:root {
+/* Monaco 编辑器主题从这些变量生成（editorTheme.ts），颜色值需为不透明色。 */
+:root,
+.light {
   --background: #ffffff;
-  --foreground: #262b35;
+  --foreground: #1c2024;
   --card: #ffffff;
   --popover: #ffffff;
-  --primary: #4f5fd5;
+  --primary: #3e63dd;
   --primary-foreground: #ffffff;
-  --secondary: #f0f2f6;
-  --muted: #f5f6f8;
-  --muted-foreground: #657080;
-  --accent: #edf0fc;
-  --border: #e3e6ec;
-  --input: #d6dbe5;
-  --surface: #f8f9fb;
-  --destructive: #cf3d4c;
+  --secondary: #f0f0f3;
+  --muted: #f9f9fb;
+  --muted-foreground: #60646c;
+  --accent: #edf2fe;
+  --border: #e0e1e6;
+  --input: #cdced6;
+  --surface: #f9f9fb;
+  --destructive: #dc3e42;
+  --tone-info: #3e63dd;
+  --tone-violet: #6e56cf;
+  --editor-key: #3a5bc7;
+  --editor-string: #18794e;
+  --editor-keyword: #8e4ec6;
+  --editor-comment: #8b8d98;
+  --editor-line-number: #b9bbc6;
   --diagnostic-background: #fff8f8;
   --diagnostic-border: #eedee1;
   --diagnostic-accent: #a94755;
   --diagnostic-foreground: #49383e;
   --diagnostic-muted: #79646c;
   --diagnostic-hover: #f6e9ec;
-  --success: #248168;
-  --warning: #a56c14;
+  --success: #218358;
+  --warning: #ab6400;
   --radius: 8px;
   color-scheme: light;
 }
 .dark {
-  --background: #181b21;
-  --foreground: #e2e6ef;
-  --card: #1c2027;
-  --popover: #222731;
-  --primary: #98a5ff;
-  --primary-foreground: #182043;
-  --secondary: #252b35;
-  --muted: #1d222a;
-  --muted-foreground: #a0abba;
-  --accent: #29334d;
-  --border: #303743;
-  --input: #414b5b;
-  --surface: #15181e;
-  --destructive: #f08791;
+  --background: #111113;
+  --foreground: #edeef0;
+  --card: #18191b;
+  --popover: #212225;
+  --primary: #8fa5f5;
+  --primary-foreground: #10193d;
+  --secondary: #272a2d;
+  --muted: #18191b;
+  --muted-foreground: #b0b4ba;
+  --accent: #1d2848;
+  --border: #2e3135;
+  --input: #43484e;
+  --surface: #0e0e10;
+  --destructive: #ff9592;
+  --tone-info: #3e63dd;
+  --tone-violet: #6e56cf;
   --diagnostic-background: #251f25;
   --diagnostic-border: #44323b;
   --diagnostic-accent: #e0a0ae;
   --diagnostic-foreground: #e5d5dc;
   --diagnostic-muted: #b5a0aa;
   --diagnostic-hover: #362a33;
-  --success: #7dccb0;
-  --warning: #e4bd75;
-  --editor-key: #a9c7f5;
-  --editor-string: #a5d6bd;
-  --editor-keyword: #c0b3ee;
-  --editor-comment: #8b96a8;
-  --editor-line-number: #7e8999;
+  --success: #3dd68c;
+  --warning: #ffca16;
+  --editor-key: #9eb1ff;
+  --editor-string: #8fd8b0;
+  --editor-keyword: #c7b5f5;
+  --editor-comment: #80838d;
+  --editor-line-number: #5a6169;
   color-scheme: dark;
+}
+/*
+ * 可选配色：默认（上方）为冷灰靛蓝 slate。data-palette 挂在 <html> 上；
+ * 后代选择器让 editorTheme.ts 的 .light/.dark 探针也能读到当前配色。
+ * 暗色选择器特异性 (0,2,0) 高于亮色 (0,1,0)，<html> 同时带 .dark 时暗色胜出。
+ */
+[data-palette="warm"],
+[data-palette="warm"] .light {
+  --foreground: #23211d;
+  --primary: #0e6e66;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f1ed;
+  --muted: #f6f5f2;
+  --muted-foreground: #6e695f;
+  --accent: #e5f1ee;
+  --border: #e6e3dc;
+  --input: #d5d1c7;
+  --surface: #f9f8f5;
+  --destructive: #c8402f;
+  --tone-info: #2f7896;
+  --tone-violet: #8c5a8f;
+  --editor-key: #0e6e66;
+  --editor-string: #4a7a22;
+  --editor-keyword: #a8456b;
+  --editor-comment: #8f897c;
+  --editor-line-number: #b0aa9d;
+  --success: #3a7d2c;
+  --warning: #a3610f;
+}
+[data-palette="warm"].dark,
+[data-palette="warm"] .dark {
+  --background: #171614;
+  --foreground: #ebe7df;
+  --card: #1d1c19;
+  --popover: #23211e;
+  --primary: #6ccbb9;
+  --primary-foreground: #0c2420;
+  --secondary: #2a2824;
+  --muted: #1f1d1a;
+  --muted-foreground: #a8a294;
+  --accent: #1d3531;
+  --border: #33302b;
+  --input: #47433c;
+  --surface: #121110;
+  --destructive: #f08a7a;
+  --tone-info: #2f7896;
+  --tone-violet: #8c5a8f;
+  --success: #9fd37f;
+  --warning: #e9b866;
+  --editor-key: #79cdbd;
+  --editor-string: #b9d68f;
+  --editor-keyword: #e7a2bf;
+  --editor-comment: #857f72;
+  --editor-line-number: #6d675c;
+}
+[data-palette="mono"],
+[data-palette="mono"] .light {
+  --foreground: #1a1a1d;
+  --primary: #1a1a1d;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f3f4;
+  --muted: #f7f7f8;
+  --muted-foreground: #6a6a72;
+  --accent: #efeff1;
+  --border: #e6e6e9;
+  --input: #d5d5da;
+  --surface: #f9f9fa;
+  --destructive: #d1343c;
+  --tone-info: #3a74d6;
+  --tone-violet: #7d5bc9;
+  --editor-key: #2650b8;
+  --editor-string: #17784a;
+  --editor-keyword: #b3367a;
+  --editor-comment: #8a8a93;
+  --editor-line-number: #a6a6ad;
+  --success: #187a48;
+  --warning: #a05a00;
+}
+[data-palette="mono"].dark,
+[data-palette="mono"] .dark {
+  --background: #111112;
+  --foreground: #ededef;
+  --card: #171719;
+  --popover: #1c1c1f;
+  --primary: #ededef;
+  --primary-foreground: #111112;
+  --secondary: #232326;
+  --muted: #1a1a1c;
+  --muted-foreground: #a0a0a8;
+  --accent: #28282c;
+  --border: #2c2c30;
+  --input: #3d3d42;
+  --surface: #0d0d0e;
+  --destructive: #ff6b70;
+  --tone-info: #3a74d6;
+  --tone-violet: #7d5bc9;
+  --success: #5cc98e;
+  --warning: #f2a73b;
+  --editor-key: #8db4ff;
+  --editor-string: #7fd19f;
+  --editor-keyword: #f08fbf;
+  --editor-comment: #7c7c85;
+  --editor-line-number: #63636b;
 }
 @layer base {
   * {
