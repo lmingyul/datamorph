@@ -1,0 +1,12 @@
+/* jsoncrack 的样式是 CSS Modules 产物，类名带哈希，只能按前缀匹配；升级包版本时需确认类名前缀未变 */
+.json-graph [class*="_foreignObject_"] {
+  font-family: var(--font-code);
+}
+
+.json-graph text {
+  font-family: var(--font-ui) !important;
+}
+
+.json-graph [class*="_overlay_"] {
+  background: color-mix(in srgb, var(--surface) 40%, transparent);
+}

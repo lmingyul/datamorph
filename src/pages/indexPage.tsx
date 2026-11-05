@@ -22,6 +22,7 @@ import {
   Braces,
   Network,
   Table2,
+  Workflow,
   Columns2,
   WandSparkles,
   Copy,
@@ -85,6 +86,7 @@ const TreeEditor = lazy(
   () => import("@/components/vanillaJsonEditor/VanillaJsonEditor"),
 );
 const TableView = lazy(() => import("@/components/jsonTable/JsonTableView"));
+const GraphView = lazy(() => import("@/components/jsonGraph/JsonGraphView"));
 const Toolbox = lazy(() => import("@/pages/toolboxPage"));
 const onTabSwitch = () => {};
 const Loading = () => (
@@ -243,7 +245,10 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
     ["code", "编辑", Braces],
     ["tree", "树形", Network],
     ["table", "表格", Table2],
+    ["graph", "节点图", Workflow],
   ];
+  const structuredView =
+    view === "tree" || view === "table" || view === "graph";
   const update = useCallback(
     (content: string, changes?: readonly TextChange[]) =>
       useTabStore.getState().updateTabContent(tab.key, content, changes),
@@ -558,6 +563,12 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
               onDataUpdate={update}
               onCopy={tableCopy}
             />
+          )}
+          {view === "graph" && (
+            <GraphView
+              data={tab.content}
+              onEdit={() => store.setView(tab.key, "code")}
+            />
           )}{" "}
           {view === "diff" && (
             <MonacoDiffEditor
@@ -660,7 +671,7 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
                 : `${(fileBytes / 1048576).toFixed(1)} MB`}
           </span>
           <span key={view} ref={setLanguageTarget} className="inline-flex">
-            {(view === "tree" || view === "table") && (
+            {structuredView && (
               <LanguageSelector
                 language={tab.editorSettings.language}
                 languageMode={tab.editorSettings.languageMode}
@@ -678,7 +689,7 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
             ref={setIndentationTarget}
             className="status-secondary inline-flex"
           >
-            {(view === "tree" || view === "table") && (
+            {structuredView && (
               <>
                 {tab.editorSettings.indentMode !== "manual" && "自动 · "}
                 {tab.editorSettings.insertSpaces === false

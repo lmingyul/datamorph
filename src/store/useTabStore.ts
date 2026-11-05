@@ -22,7 +22,9 @@ export interface TextChange {
   text: string;
 }
 export type TabHistoryItem = DocumentSnapshot;
-export type DocumentView = "code" | "tree" | "table" | "diff";
+export type DocumentView = "code" | "tree" | "table" | "graph" | "diff";
+// 只对 JSON / JSON5 可用的结构化视图
+const STRUCTURED_VIEWS: DocumentView[] = ["tree", "table", "graph"];
 export type ToolId =
   | "protoSort"
   | "jsonPath"
@@ -528,7 +530,7 @@ export const useTabStore = create<TabStore>((set, get) => ({
   setView: (key, view) =>
     patch(key, (t) =>
       t.view === view ||
-      (["tree", "table"].includes(view) &&
+      (STRUCTURED_VIEWS.includes(view) &&
         !["json", "json5"].includes(t.editorSettings.language))
         ? t
         : { ...t, view },
@@ -587,7 +589,7 @@ export const useTabStore = create<TabStore>((set, get) => ({
             view:
               settings.language &&
               !["json", "json5"].includes(settings.language) &&
-              ["tree", "table"].includes(t.view)
+              STRUCTURED_VIEWS.includes(t.view)
                 ? "code"
                 : t.view,
           },
