@@ -54,7 +54,7 @@ export function getTableExportData(
 /** Object records use the union of own keys; mixed/nested arrays use one cell
  * per element. null is literal text, missing properties are empty cells.
  */
-function tableRows(data: unknown): unknown[][] {
+export function tableRows(data: unknown): unknown[][] {
   const records = isRecord(data)
     ? [data]
     : Array.isArray(data) && data.length > 0 && data.every(isRecord)
@@ -82,7 +82,7 @@ function tableRows(data: unknown): unknown[][] {
   return [[data]];
 }
 
-function cellText(value: unknown): string {
+export function cellText(value: unknown): string {
   if (value === undefined) return "";
   if (typeof value === "string") return value;
   if (isLosslessNumber(value)) return value.toString();

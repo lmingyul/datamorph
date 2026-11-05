@@ -55,7 +55,15 @@ export function runJsonTask(
     const kind =
       input.action === "format-code"
         ? "format"
-        : ["convert", "type", "keys", "encode", "decode", "export"].includes(
+        : [
+              "bridge",
+              "convert",
+              "type",
+              "keys",
+              "encode",
+              "decode",
+              "export",
+            ].includes(
               input.action,
             )
           ? "conversion"

@@ -15,20 +15,27 @@ export interface DocumentAction {
   onPress: () => void;
   disabled?: boolean;
   destructive?: boolean;
+  /** 低频操作，始终收进「更多」菜单 */
+  menu?: boolean;
 }
 
 export function DocumentActions({
-  actions,
+  actions: allActions,
+  startContent,
   endContent,
 }: {
   actions: DocumentAction[];
+  startContent?: ReactNode;
   endContent?: ReactNode;
 }) {
+  const actions = allActions.filter((action) => !action.menu);
+  const menuActions = allActions.filter((action) => action.menu);
   const container = useRef<HTMLDivElement>(null);
   const measurements = useRef<HTMLDivElement>(null);
+  const leading = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(0);
-  const layoutKey = actions
-    .map(({ key, label }) => `${key}:${label}`)
+  const layoutKey = allActions
+    .map(({ key, label, menu }) => `${key}:${label}:${menu ? 1 : 0}`)
     .join("|");
 
   useLayoutEffect(() => {
@@ -43,11 +50,14 @@ export function DocumentActions({
       );
       const moreWidth = widths.pop() ?? 0;
       const gap = parseFloat(getComputedStyle(measurement).columnGap) || 0;
-      const available = element.getBoundingClientRect().width;
+      const leadingWidth = leading.current?.getBoundingClientRect().width;
+      const available =
+        element.getBoundingClientRect().width -
+        (leadingWidth ? leadingWidth + gap : 0);
       const total =
         widths.reduce((sum, width) => sum + width, 0) +
         Math.max(0, widths.length - 1) * gap;
-      if (total <= available) {
+      if (!menuActions.length && total <= available) {
         setVisibleCount(widths.length);
         return;
       }
@@ -82,7 +92,7 @@ export function DocumentActions({
       {action.label}
     </Button>
   );
-  const hiddenActions = actions.slice(visibleCount);
+  const hiddenActions = [...actions.slice(visibleCount), ...menuActions];
   return (
     <div
       role="group"
@@ -93,6 +103,11 @@ export function DocumentActions({
         ref={container}
         className="relative flex min-w-0 flex-1 items-center justify-end gap-1"
       >
+        {startContent && (
+          <div ref={leading} className="flex shrink-0 items-center gap-1">
+            {startContent}
+          </div>
+        )}
         {actions.slice(0, visibleCount).map((action) => renderAction(action))}
         {hiddenActions.length > 0 && (
           <Dropdown>

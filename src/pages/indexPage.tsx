@@ -5,6 +5,7 @@ import {
   type DocumentAction,
 } from "@/components/workspace/DocumentActions";
 import { DiffPreview } from "@/components/workspace/DiffPreview";
+import { JsonToolMenus } from "@/components/workspace/JsonToolMenus";
 import { WorkspaceWelcome } from "@/components/workspace/WorkspaceWelcome";
 import { ImportDialog } from "@/components/workspace/ImportDialog";
 import { useSettingsStore } from "@/store/useSettingsStore";
@@ -374,6 +375,15 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
           </Button>
         </div>
         <DocumentActions
+          startContent={
+            view !== "diff" ? (
+              <JsonToolMenus
+                tabKey={tab.key}
+                disabled={busy}
+                onBusyChange={setBusy}
+              />
+            ) : undefined
+          }
           endContent={
             view === "code" || view === "diff" ? (
               <span
@@ -437,6 +447,7 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
               key: "clear",
               label: "清空",
               icon: Trash2,
+              menu: true,
               onPress: () => {
                 if (editor.current) editor.current.clear();
                 else update("");
@@ -459,6 +470,7 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
                     label,
                     icon,
                     disabled: busy,
+                    menu: true,
                     onPress: () =>
                       void action(
                         key === "sort-desc" ? "sort" : key,
@@ -469,12 +481,14 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
               : []),
             {
               key: "import",
+              menu: true,
               label: "导入",
               icon: FileInput,
               onPress: () => setImporting(true),
             },
             {
               key: "download",
+              menu: true,
               label: "下载",
               icon: Download,
               onPress: () =>
@@ -489,6 +503,7 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
             },
             {
               key: "history",
+              menu: true,
               label: "历史",
               icon: History,
               onPress: () => setHistory(true),

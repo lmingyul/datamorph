@@ -1,6 +1,13 @@
 import type { EncodingType, EncodingOptions } from "@/utils/encodingConverter";
 import type { NamingFormat } from "@/utils/keyNamingConverter";
+import type { JsonBridgeFormat } from "@/utils/jsonConversions";
 export type ConversionInput =
+  | {
+      action: "bridge";
+      content: string;
+      format: JsonBridgeFormat;
+      mode: "to-json" | "from-json";
+    }
   | {
       action: "export";
       content: string;
@@ -20,6 +27,14 @@ export async function executeConversion(
   input: ConversionInput,
 ): Promise<{ content: string; buffer?: ArrayBuffer }> {
   switch (input.action) {
+    case "bridge": {
+      const bridge = await import("@/utils/jsonConversions");
+      return {
+        content: (input.mode === "to-json"
+          ? bridge.convertToJson
+          : bridge.convertFromJson)(input.content, input.format),
+      };
+    }
     case "export": {
       const [{ parseJson }, table] = await Promise.all([
         import("@/utils/json"),
