@@ -55,7 +55,8 @@ class UtoolsListener {
     }
     try {
       if (
-        (data.type === "regex" || data.type === "text") &&
+        // text 类型的 payload 是用户输入的关键词本身（如 "json"），不是待处理数据
+        data.type === "regex" &&
         typeof data.payload === "string" &&
         data.payload !== ""
       ) {
