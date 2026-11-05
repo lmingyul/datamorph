@@ -60,8 +60,8 @@ export function TestResultView({ result }: { result?: TestResult | null }) {
     <div
       className={`mt-3 rounded-lg border p-3 text-sm ${
         result.success
-          ? "border-success/20 bg-success/15 text-success"
-          : "border-danger/20 bg-danger/15 text-danger"
+          ? "border-success/20 bg-success-soft text-success"
+          : "border-danger/20 bg-danger-soft text-danger"
       } shadow-sm`}
     >
       <div className="flex items-center gap-2.5">

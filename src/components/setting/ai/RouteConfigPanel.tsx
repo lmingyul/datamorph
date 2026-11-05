@@ -48,7 +48,7 @@ export function RouteConfigPanel(props: RouteConfigPanelProps) {
     <div className="space-y-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 className="flex items-center gap-2.5 text-lg font-medium">
-          <div className="rounded-lg bg-primary/15 p-1.5">
+          <div className="rounded-lg bg-primary-soft p-1.5">
             <Icon icon="solar:settings-bold" width={18} />
           </div>
           {ROUTE_LABEL[routeType]} 配置
@@ -89,7 +89,7 @@ function ConfigSection({ children }: { children: ReactNode }) {
 
 function PromoBanner() {
   return (
-    <div className="rounded-lg border border-primary/20 bg-primary/10 p-3">
+    <div className="rounded-lg border border-primary/20 bg-primary-soft p-3">
       <div className="flex items-center gap-2.5">
         <Icon className="text-primary" icon="solar:star-bold" width={20} />
         <span className="text-[0.8125rem] font-medium text-primary">
@@ -272,7 +272,7 @@ function CustomRouteConfig(props: RouteConfigPanelProps) {
 
   return (
     <ConfigSection>
-      <div className="rounded-lg border border-primary/20 bg-primary/10 p-3">
+      <div className="rounded-lg border border-primary/20 bg-primary-soft p-3">
         <div className="flex items-center gap-2.5">
           <Icon
             className="text-primary"

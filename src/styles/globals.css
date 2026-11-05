@@ -40,6 +40,21 @@
   --spacing: 4px;
 }
 /*
+ * 同色文字下方的浅色底，替代 bg-success/15 这类写法。
+ * uTools 内置 Electron 22（Chromium 108）不支持 color-mix，构建时会补一条兜底声明，取 color-mix 的
+ * 第一个颜色；bg-success/15 的兜底是纯 success 色，配同色文字就看不见了。
+ * 这里把 transparent 放在第一个参数，混合结果不变，旧内核上兜底为透明底，文字仍可读。
+ */
+@utility bg-success-soft {
+  background-color: color-mix(in oklab, transparent 85%, var(--success));
+}
+@utility bg-danger-soft {
+  background-color: color-mix(in oklab, transparent 85%, var(--destructive));
+}
+@utility bg-primary-soft {
+  background-color: color-mix(in oklab, transparent 90%, var(--primary));
+}
+/*
  * 字体默认值；FontManager 按设置覆盖到 <html> 内联样式上。
  * 默认栈需与 src/styles/fonts.ts 保持一致。
  */

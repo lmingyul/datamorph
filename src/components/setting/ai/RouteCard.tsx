@@ -62,11 +62,11 @@ export function RouteCard({
             ● 不可用
           </span>
         ) : routeType === "default" ? (
-          <span className="rounded-full bg-success/15 px-2 py-0.5 text-[0.65625rem] font-semibold text-success">
+          <span className="rounded-full bg-success-soft px-2 py-0.5 text-[0.65625rem] font-semibold text-success">
             ● 始终启用
           </span>
         ) : enabled ? (
-          <span className="rounded-full bg-success/15 px-2 py-0.5 text-[0.65625rem] font-semibold text-success">
+          <span className="rounded-full bg-success-soft px-2 py-0.5 text-[0.65625rem] font-semibold text-success">
             ● 已启用
           </span>
         ) : (
