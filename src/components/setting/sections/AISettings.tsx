@@ -72,6 +72,7 @@ export function AISettings() {
     ssooaiRoute.proxyUrl,
     customRoute.apiKey,
     customRoute.proxyUrl,
+    customRoute.manualModel,
   ]);
 
   const refreshModels = (route: AIRouteType) => {
@@ -131,6 +132,11 @@ export function AISettings() {
 
   const handleProxyUrlChange = (proxyUrl: string) => {
     updateCustomRouteConfig({ proxyUrl });
+    if (routeType === "custom") openAIService.syncConfig();
+  };
+
+  const handleManualModelChange = (manualModel: string) => {
+    updateCustomRouteConfig({ manualModel });
     if (routeType === "custom") openAIService.syncConfig();
   };
 
@@ -250,6 +256,7 @@ export function AISettings() {
             testing={testingRoute === configuringRoute}
             onClose={handleCloseConfig}
             onConfigureApiKey={handleApiKeyChange}
+            onConfigureManualModel={handleManualModelChange}
             onConfigureProxyUrl={handleProxyUrlChange}
             onConfigureUtoolsModel={handleUtoolsModelChange}
             onRefreshCustomModels={() => refreshModels("custom")}

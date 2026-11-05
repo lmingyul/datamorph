@@ -30,6 +30,7 @@ interface RouteConfigPanelProps {
   onTest: (routeType: AIRouteType, model?: string) => void;
   onConfigureApiKey: (route: "ssooai" | "custom", apiKey: string) => void;
   onConfigureProxyUrl: (proxyUrl: string) => void;
+  onConfigureManualModel: (model: string) => void;
   onConfigureUtoolsModel: (model: string) => void;
   onRefreshSsooaiModels: () => void;
   onRefreshCustomModels: () => void;
@@ -267,6 +268,7 @@ function CustomRouteConfig(props: RouteConfigPanelProps) {
     onTest,
     onConfigureApiKey,
     onConfigureProxyUrl,
+    onConfigureManualModel,
     onRefreshCustomModels,
   } = props;
 
@@ -292,7 +294,7 @@ function CustomRouteConfig(props: RouteConfigPanelProps) {
         <Input
           className="w-full"
           id="api-url"
-          placeholder="输入 API 地址，例如: https://api.ssooai.com/v1"
+          placeholder="例如 https://api.ssooai.com/v1，也可粘贴完整的 …/chat/completions 地址"
           size="sm"
           value={customRoute.proxyUrl}
           variant="bordered"
@@ -310,6 +312,22 @@ function CustomRouteConfig(props: RouteConfigPanelProps) {
           value={customRoute.apiKey}
           variant="bordered"
           onChange={(e) => onConfigureApiKey("custom", e.target.value)}
+        />
+      </FormField>
+
+      <FormField
+        id="api-manual-model"
+        icon="solar:layers-bold"
+        label="模型名称（可选）"
+      >
+        <Input
+          className="w-full"
+          id="api-manual-model"
+          placeholder="接口不提供模型列表时填写，例如 qwen3p5-35b-a3b-64k"
+          size="sm"
+          value={customRoute.manualModel ?? ""}
+          variant="bordered"
+          onChange={(e) => onConfigureManualModel(e.target.value)}
         />
       </FormField>
 

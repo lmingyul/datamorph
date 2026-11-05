@@ -13,6 +13,7 @@ import {
   useOpenAIConfigStore,
   AIRouteType,
   DEFAULT_ROUTE_PROXY_URL,
+  normalizeApiBaseUrl,
 } from "@/store/useOpenAIConfigStore.ts";
 import { AI_ROUTE_CONFIG_KEYS } from "./aiModelSelection";
 import toast from "@/utils/toast.tsx";
@@ -78,9 +79,9 @@ export class OpenAIService {
     const state = useOpenAIConfigStore.getState();
 
     return this.routeType === "ssooai"
-      ? state.ssooaiRoute.proxyUrl
+      ? normalizeApiBaseUrl(state.ssooaiRoute.proxyUrl)
       : this.routeType === "custom"
-        ? state.customRoute.proxyUrl
+        ? normalizeApiBaseUrl(state.customRoute.proxyUrl)
         : DEFAULT_ROUTE_PROXY_URL;
   }
 
@@ -162,7 +163,7 @@ export class OpenAIService {
 
         this.openai = new OpenAI({
           apiKey: ssooaiApiKey,
-          baseURL: ssooaiProxyUrl,
+          baseURL: normalizeApiBaseUrl(ssooaiProxyUrl),
           dangerouslyAllowBrowser: true,
         });
         break;
@@ -328,7 +329,7 @@ export class OpenAIService {
           // 临时创建SSOOAI客户端
           const ssooaiClient = new OpenAI({
             apiKey: ssooaiApiKey,
-            baseURL: ssooaiProxyUrl,
+            baseURL: normalizeApiBaseUrl(ssooaiProxyUrl),
             dangerouslyAllowBrowser: true,
           });
 

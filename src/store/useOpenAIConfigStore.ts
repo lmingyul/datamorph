@@ -40,6 +40,8 @@ interface CustomRouteConfig {
   model: string;
   proxyUrl: string;
   temperature: number;
+  /** 手动填写的模型名，用于不提供 /models 接口的网关 */
+  manualModel?: string;
 }
 
 // OpenAI 客户端配置接口
@@ -97,6 +99,15 @@ const defaultOpenAIConfig: OpenAIConfig = {
 
 // 默认线路只访问同源服务端代理。共享密钥不得写入前端或 VITE_* 环境变量。
 export const DEFAULT_ROUTE_PROXY_URL = "/api/ai/v1";
+
+/** 请求时会在基础地址后拼 /models、/chat/completions，所以允许用户粘贴完整的 chat/completions 地址。 */
+export function normalizeApiBaseUrl(url: string): string {
+  return url
+    .trim()
+    .replace(/\/+$/, "")
+    .replace(/\/chat\/completions$/i, "")
+    .replace(/\/+$/, "");
+}
 
 const BD_OPENAI_CONFIG_KEY = "openai-config";
 
@@ -217,7 +228,9 @@ export const useOpenAIConfigStore = create<OpenAIConfigStore>()(
               ...((config.apiKey !== undefined &&
                 config.apiKey !== state.customRoute.apiKey) ||
               (config.proxyUrl !== undefined &&
-                config.proxyUrl !== state.customRoute.proxyUrl)
+                config.proxyUrl !== state.customRoute.proxyUrl) ||
+              (config.manualModel !== undefined &&
+                config.manualModel !== state.customRoute.manualModel)
                 ? {
                     customModels: [],
                     customRoute: { ...state.customRoute, ...config, model: "" },
@@ -333,29 +346,43 @@ export const useOpenAIConfigStore = create<OpenAIConfigStore>()(
                   (!credentials.apiKey || !credentials.proxyUrl)
                 )
                   throw new Error("请先配置 API 地址和密钥");
-                const baseURL =
-                  credentials?.proxyUrl.replace(/\/+$/, "") ||
-                  DEFAULT_ROUTE_PROXY_URL;
-                const response = await fetch(`${baseURL}/models`, {
-                  headers: credentials
-                    ? { Authorization: `Bearer ${credentials.apiKey}` }
-                    : undefined,
-                  signal: AbortSignal.timeout(10000),
-                });
-                if (!response.ok)
-                  throw new Error(
-                    route === "default" && response.status === 503
-                      ? "站点API尚未配置，请联系管理员或使用私有API"
-                      : "获取模型失败，请检查 API 配置后重试",
+                const baseURL = credentials
+                  ? normalizeApiBaseUrl(credentials.proxyUrl)
+                  : DEFAULT_ROUTE_PROXY_URL;
+                const manualModel =
+                  route === "custom"
+                    ? get().customRoute.manualModel?.trim() || ""
+                    : "";
+                try {
+                  const response = await fetch(`${baseURL}/models`, {
+                    headers: credentials
+                      ? { Authorization: `Bearer ${credentials.apiKey}` }
+                      : undefined,
+                    signal: AbortSignal.timeout(10000),
+                  });
+                  if (!response.ok)
+                    throw new Error(
+                      route === "default" && response.status === 503
+                        ? "站点API尚未配置，请联系管理员或使用私有API"
+                        : route === "custom"
+                          ? "获取模型失败，请检查 API 配置；若接口不提供模型列表，请手动填写模型名称"
+                          : "获取模型失败，请检查 API 配置后重试",
+                    );
+                  const data = await response.json();
+                  if (!Array.isArray(data?.data))
+                    throw new Error("模型列表格式不正确");
+                  models = data.data.flatMap((item: { id?: unknown }) =>
+                    typeof item?.id === "string" && item.id.trim()
+                      ? [{ value: item.id, label: item.id }]
+                      : [],
                   );
-                const data = await response.json();
-                if (!Array.isArray(data?.data))
-                  throw new Error("模型列表格式不正确");
-                models = data.data.flatMap((item: { id?: unknown }) =>
-                  typeof item?.id === "string" && item.id.trim()
-                    ? [{ value: item.id, label: item.id }]
-                    : [],
-                );
+                } catch (error) {
+                  // 部分网关只开放 chat/completions，填了模型名就直接用它
+                  if (!manualModel) throw error;
+                  models = [];
+                }
+                if (manualModel)
+                  models.unshift({ value: manualModel, label: manualModel });
               }
               models = [
                 ...new Map(

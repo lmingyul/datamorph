@@ -92,3 +92,80 @@ test("site route sends no browser credential and only uses the current origin", 
     useOpenAIConfigStore.setState(originalState, true);
   }
 });
+
+test("custom route accepts a full chat/completions URL and a manual model when /models is missing", async () => {
+  const originalFetch = globalThis.fetch;
+  const requests: { url: string; model?: string }[] = [];
+
+  globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    requests.push({
+      url,
+      model: init?.body ? JSON.parse(String(init.body)).model : undefined,
+    });
+    if (url.endsWith("/models"))
+      return new Response("not found", { status: 404 });
+
+    return new Response(
+      JSON.stringify({ choices: [{ message: { content: "ok" } }] }),
+      { headers: { "content-type": "application/json" } },
+    );
+  };
+
+  await import("openai/shims/web");
+  const { OpenAIService } = await import("./openAIService");
+  const { useOpenAIConfigStore } = await import(
+    "../store/useOpenAIConfigStore"
+  );
+  const { storage } = await import("../lib/indexedDBStore");
+  const originalSave = storage.setItem;
+  storage.setItem = async (_key, value) => value;
+  const originalState = useOpenAIConfigStore.getState();
+  const gateway = "http://llm.example/llm/qwen/v1";
+
+  try {
+    useOpenAIConfigStore.setState({
+      routeType: "custom",
+      customRoute: {
+        ...originalState.customRoute,
+        apiKey: "user-test-key",
+        proxyUrl: `${gateway}/chat/completions/`,
+        manualModel: " qwen ",
+        model: "",
+      },
+    });
+
+    await useOpenAIConfigStore.getState().fetchModels("custom");
+    assert.deepEqual(useOpenAIConfigStore.getState().customModels, [
+      { value: "qwen", label: "qwen" },
+    ]);
+    assert.equal(useOpenAIConfigStore.getState().customRoute.model, "qwen");
+
+    assert.deepEqual(requests, [
+      { url: `${gateway}/models`, model: undefined },
+    ]);
+
+    // SDK 在首次加载时已绑定上一个用例的 fetch，这里直接检查客户端的基础地址
+    const service = OpenAIService.createInstance();
+    assert.equal(service.config.model, "qwen");
+    assert.equal(
+      (service as unknown as { openai: { baseURL: string } }).openai.baseURL,
+      gateway,
+    );
+
+    useOpenAIConfigStore.setState({
+      customRoute: {
+        ...useOpenAIConfigStore.getState().customRoute,
+        manualModel: "",
+      },
+    });
+    await assert.rejects(
+      useOpenAIConfigStore.getState().fetchModels("custom"),
+      /手动填写模型名称/,
+    );
+  } finally {
+    storage.setItem = originalSave;
+    globalThis.fetch = originalFetch;
+    useOpenAIConfigStore.setState(originalState, true);
+  }
+});
