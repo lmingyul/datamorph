@@ -21,14 +21,14 @@ export type SettingTone =
   | "neutral";
 
 const TONE_CLASSES: Record<SettingTone, string> = {
-  // 彩色方块（白字图标）—— 仿 macOS 系统设置
-  primary: "bg-primary text-white",
-  success: "bg-success text-white",
-  warning: "bg-warning text-white",
-  danger: "bg-danger text-white",
+  // 彩色方块 —— 仿 macOS 系统设置。暗色主题下这些语义色是浅色，图标需改用深色。
+  primary: "bg-primary text-primary-foreground",
+  success: "bg-success text-white dark:text-background",
+  warning: "bg-warning text-white dark:text-background",
+  danger: "bg-danger text-white dark:text-background",
   info: "bg-blue-500 text-white",
   violet: "bg-purple-500 text-white",
-  neutral: "bg-border text-foreground",
+  neutral: "bg-muted-foreground text-background",
 };
 
 interface SectionHeaderProps {
@@ -158,41 +158,33 @@ interface InfoNoteProps {
 export function InfoNote({
   icon = "solar:info-circle-bold",
   title,
-  tone = "primary",
+  tone = "neutral",
   className,
   children,
 }: InfoNoteProps) {
   return (
     <div
       className={cn(
-        "mx-3 my-3 flex items-start gap-3 rounded-lg border p-3 sm:mx-4",
-        tone === "warning"
-          ? "border-warning/20 bg-warning/10"
-          : tone === "primary"
-            ? "border-primary/20 bg-primary/10"
-            : "border-border bg-secondary/50",
+        "mx-3 my-3 flex items-start gap-3 p-3 sm:mx-4",
+        tone === "warning" &&
+          "rounded-lg border border-warning/20 bg-warning/10",
         className,
       )}
     >
       <Icon
         className={cn(
           "mt-0.5 flex-shrink-0",
-          tone === "warning"
-            ? "text-warning"
-            : tone === "primary"
-              ? "text-primary"
-              : "text-muted-foreground",
+          tone === "warning" ? "text-warning" : "text-muted-foreground",
         )}
         icon={icon}
         width={18}
       />
-      <div className="text-[12px] leading-relaxed text-foreground">
+      <div className="text-[12px] leading-relaxed text-muted-foreground">
         {title ? (
           <p
             className={cn(
               "mb-1 font-semibold",
-              tone === "primary" && "text-primary",
-              tone === "warning" && "text-warning",
+              tone === "warning" ? "text-warning" : "text-foreground",
             )}
           >
             {title}
