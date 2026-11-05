@@ -11,9 +11,6 @@
       "cmds": [
         "json",
         "datamorph",
-        "yaml",
-        "toml",
-        "xml",
         "数据转换",
         "格式化",
         {
@@ -23,6 +20,11 @@
           "minLength": 2
         }
       ]
+    },
+    {
+      "code": "datamorph-formats",
+      "explain": "Datamorph · YAML / TOML / XML 处理",
+      "cmds": ["yaml", "toml", "xml"]
     }
   ],
   "pluginSetting": {
