@@ -6,6 +6,7 @@ import {
 } from "@/components/workspace/DocumentActions";
 import { DiffPreview } from "@/components/workspace/DiffPreview";
 import { WorkspaceWelcome } from "@/components/workspace/WorkspaceWelcome";
+import { ImportDialog } from "@/components/workspace/ImportDialog";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import {
   lazy,
@@ -39,6 +40,7 @@ import {
   Sparkles,
   X,
   Upload,
+  FileInput,
 } from "lucide-react";
 import {
   Button,
@@ -212,6 +214,7 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
   const diff = useRef<MonacoDiffEditorRef>(null);
   const table = useRef<JsonTableViewRef>(null);
   const [history, setHistory] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [settingsTarget, setSettingsTarget] = useState<HTMLSpanElement | null>(
     null,
   );
@@ -465,6 +468,12 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
                 )
               : []),
             {
+              key: "import",
+              label: "导入",
+              icon: FileInput,
+              onPress: () => setImporting(true),
+            },
+            {
               key: "download",
               label: "下载",
               icon: Download,
@@ -700,6 +709,15 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
           </span>
         </div>
       </div>
+      <ImportDialog
+        isOpen={importing}
+        onClose={() => setImporting(false)}
+        onImport={(content) => {
+          if (editor.current) editor.current.updateValue(content);
+          else update(content);
+          setWelcome(false);
+        }}
+      />
       {history && (
         <TabHistoryModal
           isOpen={history}
