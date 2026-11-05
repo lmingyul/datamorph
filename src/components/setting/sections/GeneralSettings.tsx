@@ -28,6 +28,7 @@ import toast from "@/utils/toast";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import { useTabStore } from "@/store/useTabStore";
 import { storage } from "@/lib/indexedDBStore";
+import { EDITOR_FONT_SIZE, UI_FONT_SIZE } from "@/styles/fonts";
 import { useOpenAIConfigStore } from "@/store/useOpenAIConfigStore";
 
 /**
@@ -87,7 +88,10 @@ export function GeneralSettings() {
       colorDecoderEnabled: true,
       summaryDecoderEnabled: true,
       persistentDataEnabled: true,
-      fontSize: "medium",
+      uiFontSize: UI_FONT_SIZE.default,
+      editorFontSize: EDITOR_FONT_SIZE.default,
+      uiFontFamily: "",
+      codeFontFamily: "",
       monacoEditorCDN: "local",
       chatStyle: "bubble",
       timestampDecoderEnabled: true,

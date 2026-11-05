@@ -1,3 +1,4 @@
+import { useEditorFont } from "@/hooks/useEditorFont";
 import { useBackgroundTask } from "@/components/workspace/useBackgroundTask";
 import { createToolStateHook } from "@/components/workspace/ToolContext";
 import type { editor } from "monaco-editor";
@@ -240,6 +241,7 @@ function EditorPanel({
   onMount,
 }: EditorPanelProps) {
   const { resolvedTheme } = useTheme();
+  const { fontSize, fontFamily } = useEditorFont();
   const definition = ENCODING_MAP.get(type)!;
   const characterCount = Array.from(value).length;
   const byteCount = getUtf8ByteLength(value);
@@ -318,7 +320,8 @@ function EditorPanel({
               contextmenu: true,
               cursorBlinking: "smooth",
               folding: false,
-              fontSize: 14,
+              fontSize,
+              fontFamily,
               formatOnPaste: false,
               lineNumbers: "on",
               links: false,

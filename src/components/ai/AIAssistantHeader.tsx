@@ -20,7 +20,7 @@ export default function AIAssistantHeader({
           </span>
           <div>
             <h2 className="text-sm font-medium">AI 助手</h2>
-            <p className="mt-0.5 text-[10px] tracking-[0.18em] text-muted-foreground">
+            <p className="mt-0.5 text-[0.625rem] tracking-[0.18em] text-muted-foreground">
               JSON COPILOT
             </p>
           </div>

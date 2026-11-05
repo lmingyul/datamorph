@@ -1,3 +1,6 @@
+import { useEditorFont } from "@/hooks/useEditorFont";
+import { EDITOR_FONT_SIZE } from "@/styles/fonts";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import AIAssistantHeader from "@/components/ai/AIAssistantHeader";
 import { Sheet } from "@/components/ui/sheet";
 import { DiffPreview } from "@/components/workspace/DiffPreview";
@@ -200,7 +203,8 @@ export default function MonacoDiffEditor({
     if (next !== "auto") setManualLanguage(next);
   }
   const stored = useTabStore.getState().getTabByKey(owner)?.editorSettings;
-  const [fontSize, setFontSize] = useState(stored?.fontSize || 14);
+  const { fontSize, fontFamily } = useEditorFont();
+  const setFontSize = useSettingsStore((s) => s.setEditorFontSize);
   const indentation = useEditorIndentation(owner, ready, () =>
     diff.current
       ? [
@@ -350,6 +354,7 @@ export default function MonacoDiffEditor({
         automaticLayout: true,
         theme,
         fontSize,
+        fontFamily,
         originalEditable: true,
         readOnly: modifiedReadOnly,
         originalAriaLabel,
@@ -445,9 +450,9 @@ export default function MonacoDiffEditor({
   ]);
   useEffect(() => {
     monaco.editor.setTheme(theme);
-    diff.current?.updateOptions({ fontSize });
+    diff.current?.updateOptions({ fontSize, fontFamily });
     for (const [index, ed] of editors().entries()) {
-      ed.updateOptions({ fontSize });
+      ed.updateOptions({ fontSize, fontFamily });
       const model = ed.getModel();
       if (model)
         monaco.editor.setModelLanguage(
@@ -457,7 +462,15 @@ export default function MonacoDiffEditor({
       for (const [kind, on] of Object.entries(enabled))
         updateDecoder(kind as DecoderKind, ed, { enabled: on });
     }
-  }, [theme, fontSize, currentLanguage, modifiedLanguage, enabled, ready]);
+  }, [
+    theme,
+    fontSize,
+    fontFamily,
+    currentLanguage,
+    modifiedLanguage,
+    enabled,
+    ready,
+  ]);
   useEffect(() => {
     if (context && language) setManualLanguage(language);
   }, [language, context]);
@@ -466,7 +479,6 @@ export default function MonacoDiffEditor({
   }, [languageMode, context]);
   useEffect(() => {
     useTabStore.getState().updateEditorSettings(owner, {
-      fontSize,
       ...(!context ? { language: currentLanguage, languageMode: mode } : {}),
       timestampDecoratorsEnabled: enabled.timestamp,
       base64DecoratorsEnabled: enabled.base64,
@@ -474,7 +486,7 @@ export default function MonacoDiffEditor({
       urlDecoratorsEnabled: enabled.url,
       imageDecoratorsEnabled: enabled.image,
     });
-  }, [owner, fontSize, currentLanguage, mode, enabled, context]);
+  }, [owner, currentLanguage, mode, enabled, context]);
   useEffect(() => {
     const resize = () => setNarrow(window.innerWidth < 768);
     window.addEventListener("resize", resize);
@@ -572,7 +584,7 @@ export default function MonacoDiffEditor({
               imageDecoratorsEnabled={enabled.image}
               onImageDecoratorsChange={(v) => toggle("image", v)}
               onReset={() => {
-                setFontSize(14);
+                setFontSize(EDITOR_FONT_SIZE.default);
                 indentation.reset();
               }}
             />

@@ -1,3 +1,4 @@
+import { getEditorFontFamily } from "@/hooks/useEditorFont";
 import { useEffect, useRef } from "react";
 import * as monaco from "monaco-editor";
 import { getMonacoTheme } from "./editorTheme";
@@ -63,6 +64,7 @@ export default function ReadOnlyMonacoEditor({
         wordWrap: "on",
         wrappingIndent: "indent",
         fontSize: 12,
+        fontFamily: getEditorFontFamily(),
         tabSize: 2,
         padding: { top: 12, bottom: 12 },
         contextmenu: true,

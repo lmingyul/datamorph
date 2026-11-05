@@ -1,3 +1,4 @@
+import { getEditorFontFamily } from "@/hooks/useEditorFont";
 import { useEffect, useRef } from "react";
 import * as monaco from "monaco-editor";
 import { useDataLanguage } from "@/hooks/useDataLanguage";
@@ -23,6 +24,7 @@ export function DiffPreview({
       minimap: { enabled: false },
       scrollBeyondLastLine: false,
       fontSize: 12,
+      fontFamily: getEditorFontFamily(),
       renderSideBySide: true,
       useInlineViewWhenSpaceIsLimited: true,
     });

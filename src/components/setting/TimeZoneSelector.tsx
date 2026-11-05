@@ -48,7 +48,7 @@ function TimeZoneList({ onSelect }: { onSelect: () => void }) {
         <Command.Input
           aria-label="搜索时区"
           placeholder="搜索城市或时区…"
-          className="h-10 w-full bg-transparent text-[13px] outline-none placeholder:text-muted-foreground"
+          className="h-10 w-full bg-transparent text-[0.8125rem] outline-none placeholder:text-muted-foreground"
         />
       </div>
       <Command.List className="max-h-[min(300px,45dvh)] overflow-y-auto overscroll-contain p-1.5">
@@ -67,11 +67,11 @@ function TimeZoneList({ onSelect }: { onSelect: () => void }) {
               setTimeZone(zone);
               onSelect();
             }}
-            className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-[13px] outline-none data-[selected=true]:bg-accent"
+            className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-[0.8125rem] outline-none data-[selected=true]:bg-accent"
           >
             <div className="min-w-0 flex-1">
               <div className="truncate">{getTimeZoneLabel(zone)}</div>
-              <div className="truncate text-[11px] text-muted-foreground">
+              <div className="truncate text-[0.6875rem] text-muted-foreground">
                 {zone === LOCAL_TIME_ZONE ? getLocalTimeZone() : zone}
               </div>
             </div>
@@ -99,7 +99,7 @@ export function TimeZoneSelector({ className }: { className?: string }) {
           aria-label="时间戳时区"
           title={resolveTimeZone(value)}
           className={cn(
-            "flex min-h-9 w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-background px-2.5 py-1.5 text-left text-[12px] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "flex min-h-9 w-full min-w-0 items-center gap-2 rounded-lg border border-input bg-background px-2.5 py-1.5 text-left text-[0.75rem] transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             className,
           )}
         >

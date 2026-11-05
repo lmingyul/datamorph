@@ -72,7 +72,7 @@ export default function IndentationSelector({
               <DropdownMenu.RadioItem
                 key={option.value}
                 value={option.value}
-                className="relative flex cursor-default items-center rounded-md py-1.5 pl-7 pr-2 text-[13px] outline-none focus:bg-accent"
+                className="relative flex cursor-default items-center rounded-md py-1.5 pl-7 pr-2 text-[0.8125rem] outline-none focus:bg-accent"
               >
                 <DropdownMenu.ItemIndicator className="absolute left-2">
                   <Check className="size-3.5" aria-hidden="true" />

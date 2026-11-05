@@ -34,9 +34,41 @@
   --radius-md: 6px;
   --radius-lg: 8px;
   --radius-xl: 12px;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-code);
+  /* 间距固定为 px：界面字号通过根字号（rem）缩放，只放大文字不放大布局 */
+  --spacing: 4px;
+}
+/*
+ * 字体默认值；FontManager 按设置覆盖到 <html> 内联样式上。
+ * 默认栈需与 src/styles/fonts.ts 保持一致。
+ */
+:root {
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
     "Microsoft YaHei", sans-serif;
-  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-code: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --editor-font-size: 14px;
+}
+/* 原字号预设注入的全局规则，保持不分层以维持原有优先级 */
+body {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+h1 {
+  font-size: 1.25rem;
+}
+h2 {
+  font-size: 1.125rem;
+}
+h3 {
+  font-size: 1rem;
+}
+h4 {
+  font-size: 0.9375rem;
+}
+h5,
+h6 {
+  font-size: 0.875rem;
 }
 /* Monaco 编辑器主题从这些变量生成（editorTheme.ts），颜色值需为不透明色。 */
 :root,
@@ -224,7 +256,7 @@
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
-    font-size: 13px;
+    font-size: 0.8125rem;
     -webkit-font-smoothing: antialiased;
   }
   button,
@@ -312,7 +344,7 @@
 }
 .brand-label {
   color: var(--foreground);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 650;
   letter-spacing: -0.4px;
 }
@@ -320,7 +352,7 @@
   display: block;
   margin-top: 3px;
   color: var(--muted-foreground);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 400;
   letter-spacing: 0.04em;
 }
@@ -330,7 +362,7 @@
   gap: 5px;
 }
 .nav-section {
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 500;
   color: var(--muted-foreground);
   letter-spacing: 0.08em;
@@ -347,7 +379,7 @@
   border-radius: 8px;
   background: transparent;
   color: var(--muted-foreground);
-  font-size: var(--font-size-button, 13px);
+  font-size: 0.8125rem;
   text-align: left;
   white-space: nowrap;
   transition:
@@ -433,7 +465,7 @@
   justify-content: flex-start;
   padding: 0 8px;
   color: var(--muted-foreground);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 400;
 }
 .workbench-nav.collapsed {
@@ -485,7 +517,7 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--background);
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--muted-foreground);
   white-space: nowrap;
 }
@@ -496,7 +528,7 @@
 .command-trigger kbd {
   border-left: 1px solid var(--border);
   padding-left: 8px;
-  font-size: 10px;
+  font-size: 0.625rem;
 }
 .command-trigger-compact {
   justify-content: center;
@@ -520,7 +552,7 @@
   height: 26px;
   padding: 0 12px;
   border-top: 1px solid var(--border);
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--muted-foreground);
   background: var(--surface);
   white-space: nowrap;
@@ -558,7 +590,7 @@
   height: 24px;
   padding: 0 12px;
   border-top: 1px solid var(--border);
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--muted-foreground);
 }
 .editor-query-bar {
@@ -590,7 +622,7 @@
   outline: none;
   color: var(--foreground);
   background: transparent;
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 .editor-query-bar input::placeholder {
   color: var(--muted-foreground);
@@ -606,7 +638,7 @@
   .workbench-status {
     gap: 8px;
     padding: 0 8px;
-    font-size: 10px;
+    font-size: 0.625rem;
   }
   .status-document,
   .status-details {
@@ -677,7 +709,7 @@
   border-bottom: 1px solid var(--border);
   background: transparent;
   outline: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 .command-dialog [cmdk-list] {
   max-height: 50dvh;
@@ -685,7 +717,7 @@
   padding: 6px;
 }
 .command-dialog [cmdk-group-heading] {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--muted-foreground);
   padding: 12px 10px 5px;
 }
@@ -695,7 +727,7 @@
   align-items: center;
   padding: 9px 10px;
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
 }
 .command-dialog [cmdk-item][data-selected="true"] {
@@ -713,7 +745,7 @@
 }
 
 .tool-workspace h1 {
-  font-size: 16px !important;
+  font-size: 1rem !important;
   font-weight: 600;
   letter-spacing: -0.02em;
 }

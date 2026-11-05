@@ -250,7 +250,7 @@ function DynamicTabs({
               </div>
             </ContextMenu.Trigger>
             <ContextMenu.Portal>
-              <ContextMenu.Content className="z-50 min-w-40 rounded-lg border bg-popover p-1 text-[13px] shadow-lg">
+              <ContextMenu.Content className="z-50 min-w-40 rounded-lg border bg-popover p-1 text-[0.8125rem] shadow-lg">
                 {[
                   ["重命名", () => open("rename", tab.key)],
                   [

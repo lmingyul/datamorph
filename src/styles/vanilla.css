@@ -9,12 +9,11 @@
   --jse-panel-color: var(--foreground);
   --jse-menu-color: var(--foreground);
   --jse-main-border: 1px solid var(--border);
-  --jse-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-    "PingFang SC", sans-serif;
-  --jse-font-family-mono: "SFMono-Regular", Consolas, monospace;
-  --jse-font-size: 13px;
-  --jse-font-size-mono: 14px;
-  --jse-font-size-main-menu: 13px;
+  --jse-font-family: var(--font-ui);
+  --jse-font-family-mono: var(--font-code);
+  --jse-font-size: 0.8125rem;
+  --jse-font-size-mono: var(--editor-font-size);
+  --jse-font-size-main-menu: 0.8125rem;
   --jse-content-background-color: var(--background);
   --jse-modal-background: var(--popover);
   --jse-modal-code-background: var(--muted);

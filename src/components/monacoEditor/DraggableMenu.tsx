@@ -62,7 +62,7 @@ function ToggleRow({
 }) {
   return (
     <div className="flex min-h-10 items-center justify-between gap-3">
-      <span className="flex items-center gap-2 text-[13px]">
+      <span className="flex items-center gap-2 text-[0.8125rem]">
         <Icon
           className="size-4 shrink-0 text-muted-foreground"
           aria-hidden="true"
@@ -113,7 +113,7 @@ export default function DraggableMenu(props: DraggableMenuProps) {
             <h3 className="text-base font-semibold tracking-tight">
               编辑器设置
             </h3>
-            <span className="text-[11px] text-muted-foreground">即时生效</span>
+            <span className="text-[0.6875rem] text-muted-foreground">即时生效</span>
           </div>
 
           <section className="px-5 pb-5 pt-4" aria-label="排版设置">
@@ -121,13 +121,13 @@ export default function DraggableMenu(props: DraggableMenuProps) {
               <h4 className="text-xs font-medium text-muted-foreground">
                 排版
               </h4>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-[0.6875rem] text-muted-foreground">
                 当前编辑器
               </span>
             </div>
             <div className="grid grid-cols-1 gap-4 min-[480px]:grid-cols-2 min-[480px]:gap-5">
               <div>
-                <div className="flex h-7 items-center justify-between text-[13px]">
+                <div className="flex h-7 items-center justify-between text-[0.8125rem]">
                   <span>字体大小</span>
                   <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs tabular-nums">
                     {props.currentFontSize} px
@@ -143,7 +143,7 @@ export default function DraggableMenu(props: DraggableMenuProps) {
                 />
               </div>
               <div className="min-[480px]:border-l min-[480px]:border-border/70 min-[480px]:pl-5">
-                <div className="flex h-7 items-center justify-between gap-2 text-[13px]">
+                <div className="flex h-7 items-center justify-between gap-2 text-[0.8125rem]">
                   <span>缩进</span>
                   <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs tabular-nums">
                     {props.insertSpaces
@@ -200,13 +200,13 @@ export default function DraggableMenu(props: DraggableMenuProps) {
                 </span>
                 <div className="min-w-0 flex-1">
                   <TimeZoneSelector />
-                  <p className="mt-1.5 break-words text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="mt-1.5 break-words text-[0.6875rem] leading-relaxed text-muted-foreground">
                     {resolveTimeZone(settings.timestampTimeZone)} · 全局同步
                   </p>
                 </div>
               </div>
               {!settings.timestampDecoderEnabled && (
-                <p className="mt-1 text-[10px] text-muted-foreground">
+                <p className="mt-1 text-[0.625rem] text-muted-foreground">
                   在系统设置的「自动解码」中启用时间戳提示
                 </p>
               )}

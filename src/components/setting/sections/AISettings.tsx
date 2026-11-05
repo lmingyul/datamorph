@@ -182,7 +182,7 @@ export function AISettings() {
       <SectionHeader description="管理 AI 线路与模型配置" title="AI 设置" />
 
       <GroupLabel>AI 线路</GroupLabel>
-      <p className="mb-3 px-4 text-[13px] text-muted-foreground">
+      <p className="mb-3 px-4 text-[0.8125rem] text-muted-foreground">
         启用或禁用不同的 AI
         线路，点击「配置」按钮设置线路参数。站点线路需要由站点管理员启用。
       </p>

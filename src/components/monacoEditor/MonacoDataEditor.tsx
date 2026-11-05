@@ -1,3 +1,6 @@
+import { useEditorFont } from "@/hooks/useEditorFont";
+import { EDITOR_FONT_SIZE } from "@/styles/fonts";
+import { useSettingsStore } from "@/store/useSettingsStore";
 import AIAssistantHeader from "@/components/ai/AIAssistantHeader";
 import { formatEditorDocument } from "./formatDocument";
 import { applyTextChanges } from "./textChanges";
@@ -178,7 +181,8 @@ export default function MonacoDataEditor({
   const [busy, setBusy] = useState(false);
   const showBusy = useDelayedVisibility(busy);
   const stored = useTabStore.getState().getTabByKey(owner)?.editorSettings;
-  const [fontSize, setFontSize] = useState(stored?.fontSize || 14);
+  const { fontSize, fontFamily } = useEditorFont();
+  const setFontSize = useSettingsStore((s) => s.setEditorFontSize);
   const indentation = useEditorIndentation(owner, ready, () => {
     const model = editor.current?.getModel();
     return model ? [model] : [];
@@ -458,7 +462,7 @@ export default function MonacoDataEditor({
         automaticLayout: true,
         minimap: { enabled: minimap },
         fontSize,
-        fontFamily: '"SFMono-Regular",Consolas,monospace',
+        fontFamily,
         wordWrap: "on",
         scrollBeyondLastLine: false,
         padding: { top: 12, bottom: 12 },
@@ -560,10 +564,10 @@ export default function MonacoDataEditor({
     if (ready && modelText.current !== value) apply(value);
   }, [value, ready]);
   useEffect(() => {
-    editor.current?.updateOptions({ theme, fontSize });
+    editor.current?.updateOptions({ theme, fontSize, fontFamily });
     const model = editor.current?.getModel();
     if (model) monaco.editor.setModelLanguage(model, currentLanguage);
-  }, [theme, fontSize, currentLanguage, ready]);
+  }, [theme, fontSize, fontFamily, currentLanguage, ready]);
   useEffect(() => {
     if (!documentId && language) setManualLanguage(language);
   }, [language, documentId]);
@@ -588,7 +592,6 @@ export default function MonacoDataEditor({
   }, [currentLanguage, ready, jsonSupported, modelKey, validate]);
   useEffect(() => {
     useTabStore.getState().updateEditorSettings(owner, {
-      fontSize,
       ...(documentId ? { language: currentLanguage, languageMode: mode } : {}),
       timestampDecoratorsEnabled: decoders.timestamp,
       base64DecoratorsEnabled: decoders.base64,
@@ -596,7 +599,7 @@ export default function MonacoDataEditor({
       urlDecoratorsEnabled: decoders.url,
       imageDecoratorsEnabled: decoders.image,
     });
-  }, [owner, fontSize, currentLanguage, mode, decoders, documentId]);
+  }, [owner, currentLanguage, mode, decoders, documentId]);
   useEffect(() => {
     if ((side || inlineQuery) && (!narrow || inlineQuery))
       sidePanel.current?.resize(inlineQuery ? 50 : 38);
@@ -701,7 +704,7 @@ export default function MonacoDataEditor({
             <Filter className="size-4 text-primary" />
             JSONPath 结果
             {matchCount !== null && (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[0.625rem] text-primary">
                 {matchCount} 项匹配
               </span>
             )}
@@ -786,7 +789,7 @@ export default function MonacoDataEditor({
               替换原文
             </Button>
           </div>
-          <div className="border-b bg-muted/20 px-3 py-2 font-mono text-[11px] text-muted-foreground break-all">
+          <div className="border-b bg-muted/20 px-3 py-2 font-mono text-[0.6875rem] text-muted-foreground break-all">
             {query}
           </div>
           {!query.trim() ? (
@@ -883,7 +886,7 @@ export default function MonacoDataEditor({
                 imageDecoratorsEnabled={decoders.image}
                 onImageDecoratorsChange={(enabled) => toggle("image", enabled)}
                 onReset={() => {
-                  setFontSize(14);
+                  setFontSize(EDITOR_FONT_SIZE.default);
                   indentation.reset();
                 }}
               />
@@ -947,7 +950,7 @@ export default function MonacoDataEditor({
                 className="size-3.5 shrink-0 text-destructive"
               />
             ) : matchCount !== null ? (
-              <span className="shrink-0 text-[10px] text-muted-foreground">
+              <span className="shrink-0 text-[0.625rem] text-muted-foreground">
                 {matchCount} 项
               </span>
             ) : null}

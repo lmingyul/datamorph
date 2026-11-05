@@ -1,3 +1,4 @@
+import { getEditorFontFamily } from "@/hooks/useEditorFont";
 import { useEffect, useRef, useState } from "react";
 import * as monaco from "monaco-editor";
 import { getMonacoTheme } from "@/components/monacoEditor/editorTheme";
@@ -77,6 +78,7 @@ export default function HistoryDiffPreview({
           minimap: { enabled: false },
           scrollBeyondLastLine: false,
           fontSize: 12,
+          fontFamily: getEditorFontFamily(),
           lineNumbersMinChars: 3,
           wordWrap: "on",
           padding: { top: 12, bottom: 12 },

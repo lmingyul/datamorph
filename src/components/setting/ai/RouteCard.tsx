@@ -47,10 +47,10 @@ export function RouteCard({
           <Icon icon={ROUTE_ICON[routeType]} width={20} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-[13px] font-semibold text-foreground">
+          <div className="text-[0.8125rem] font-semibold text-foreground">
             {ROUTE_LABEL[routeType]}
           </div>
-          <div className="mt-0.5 text-[11px] text-muted-foreground">
+          <div className="mt-0.5 text-[0.6875rem] text-muted-foreground">
             {description}
           </div>
         </div>
@@ -58,19 +58,19 @@ export function RouteCard({
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         {!available ? (
-          <span className="rounded-full bg-border/60 px-2 py-0.5 text-[10.5px] font-semibold text-muted-foreground">
+          <span className="rounded-full bg-border/60 px-2 py-0.5 text-[0.65625rem] font-semibold text-muted-foreground">
             ● 不可用
           </span>
         ) : routeType === "default" ? (
-          <span className="rounded-full bg-success/15 px-2 py-0.5 text-[10.5px] font-semibold text-success">
+          <span className="rounded-full bg-success/15 px-2 py-0.5 text-[0.65625rem] font-semibold text-success">
             ● 始终启用
           </span>
         ) : enabled ? (
-          <span className="rounded-full bg-success/15 px-2 py-0.5 text-[10.5px] font-semibold text-success">
+          <span className="rounded-full bg-success/15 px-2 py-0.5 text-[0.65625rem] font-semibold text-success">
             ● 已启用
           </span>
         ) : (
-          <span className="rounded-full bg-border/60 px-2 py-0.5 text-[10.5px] font-semibold text-muted-foreground">
+          <span className="rounded-full bg-border/60 px-2 py-0.5 text-[0.65625rem] font-semibold text-muted-foreground">
             ● 已关闭
           </span>
         )}

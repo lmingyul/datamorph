@@ -79,7 +79,6 @@ export interface ToolStateById {
 }
 
 export interface EditorSettings {
-  fontSize: number;
   language: string;
   languageMode: LanguageMode;
   filename?: string;
@@ -229,7 +228,6 @@ function makeTab(
     updatedAt: Date.now(),
     extraData,
     editorSettings: {
-      fontSize: 14,
       language: "json",
       languageMode: "auto",
       filename: title,

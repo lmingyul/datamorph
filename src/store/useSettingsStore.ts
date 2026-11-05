@@ -5,14 +5,20 @@ import { create } from "zustand";
 import { devtools, subscribeWithSelector } from "zustand/middleware";
 
 import { StorageManager } from "@/lib/storage/StorageManager";
+import { EDITOR_FONT_SIZE, UI_FONT_SIZE } from "@/styles/fonts";
 
 const storageManager = new StorageManager();
 
 // 定义聊天窗口样式类型
 export type ChatStyle = "bubble" | "document";
 
-// 定义字体大小类型
-export type FontSize = "small" | "medium" | "large";
+// 旧版的三档字号，仅用于迁移
+type LegacyFontSize = "small" | "medium" | "large";
+const LEGACY_UI_FONT_SIZE: Record<LegacyFontSize, number> = {
+  small: 12,
+  medium: UI_FONT_SIZE.default,
+  large: 15,
+};
 
 // 主题配色：slate 冷灰靛蓝（默认）、warm 暖纸青墨、mono 墨黑单色
 export type ColorTheme = "slate" | "warm" | "mono";
@@ -26,6 +32,32 @@ function readInitialColorTheme(): ColorTheme {
   return stored === "warm" || stored === "mono" ? stored : "slate";
 }
 
+type FontSettings = Pick<
+  SettingsState,
+  "uiFontSize" | "editorFontSize" | "uiFontFamily" | "codeFontFamily"
+>;
+
+// 同配色：字体设置也本地镜像一份，避免启动时字号跳变
+export const FONT_SETTINGS_STORAGE_KEY = "datamorph-font-settings";
+
+const DEFAULT_FONT_SETTINGS: FontSettings = {
+  uiFontSize: UI_FONT_SIZE.default,
+  editorFontSize: EDITOR_FONT_SIZE.default,
+  uiFontFamily: "",
+  codeFontFamily: "",
+};
+
+function readInitialFontSettings(): FontSettings {
+  try {
+    return {
+      ...DEFAULT_FONT_SETTINGS,
+      ...JSON.parse(localStorage.getItem(FONT_SETTINGS_STORAGE_KEY) ?? "{}"),
+    };
+  } catch {
+    return DEFAULT_FONT_SETTINGS;
+  }
+}
+
 // 定义 Monaco 编辑器 CDN 类型
 export type MonacoEditorCDN = "local" | "cdn";
 
@@ -37,8 +69,11 @@ export interface SettingsState {
   monacoEditorCDN: MonacoEditorCDN;
   // 聊天窗口样式
   chatStyle: ChatStyle;
-  // 字体大小设置
-  fontSize: FontSize;
+  // 字号（px）与自定义字体，字体为空表示使用默认字体
+  uiFontSize: number;
+  editorFontSize: number;
+  uiFontFamily: string;
+  codeFontFamily: string;
   colorTheme: ColorTheme;
   // 解码器设置
   timestampDecoderEnabled: boolean;
@@ -62,7 +97,10 @@ export interface SettingsState {
   setExpandSidebar: (value: boolean) => void;
   setMonacoEditorCDN: (value: MonacoEditorCDN) => void;
   setChatStyle: (value: ChatStyle) => void;
-  setFontSize: (value: FontSize) => void;
+  setUiFontSize: (value: number) => void;
+  setEditorFontSize: (value: number) => void;
+  setUiFontFamily: (value: string) => void;
+  setCodeFontFamily: (value: string) => void;
   setColorTheme: (value: ColorTheme) => void;
   setTimestampDecoderEnabled: (value: boolean) => void;
   setTimestampTimeZone: (value: string) => void;
@@ -89,7 +127,7 @@ export const useSettingsStore = create<SettingsState>()(
         expandSidebar: true,
         monacoEditorCDN: "local",
         chatStyle: "bubble",
-        fontSize: "medium",
+        ...readInitialFontSettings(),
         colorTheme: readInitialColorTheme(),
         timestampDecoderEnabled: true,
         timestampTimeZone: LOCAL_TIME_ZONE,
@@ -110,7 +148,11 @@ export const useSettingsStore = create<SettingsState>()(
         setMonacoEditorCDN: (value: MonacoEditorCDN) =>
           set({ monacoEditorCDN: value }),
         setChatStyle: (value: ChatStyle) => set({ chatStyle: value }),
-        setFontSize: (value: FontSize) => set({ fontSize: value }),
+        setUiFontSize: (value: number) => set({ uiFontSize: value }),
+        setEditorFontSize: (value: number) => set({ editorFontSize: value }),
+        // 不在这里 trim：输入框逐字写入，trim 会吞掉 "JetBrains Mono" 中间正在输入的空格
+        setUiFontFamily: (value: string) => set({ uiFontFamily: value }),
+        setCodeFontFamily: (value: string) => set({ codeFontFamily: value }),
         setColorTheme: (value: ColorTheme) => set({ colorTheme: value }),
         setTimestampDecoderEnabled: (value: boolean) =>
           set({ timestampDecoderEnabled: value }),
@@ -140,11 +182,18 @@ export const useSettingsStore = create<SettingsState>()(
         setSettings: (settings: Partial<SettingsState>) => set(settings),
         // 从存储同步设置数据
         syncSettingsStore: async () => {
-          const settings = await storageManager.get<SettingsState>(DB_SETTINGS);
+          const stored = await storageManager.get<
+            SettingsState & { fontSize?: LegacyFontSize }
+          >(DB_SETTINGS);
 
-          if (settings) {
+          if (stored) {
+            const { fontSize: legacyFontSize, ...settings } = stored;
+
             set({
               ...settings,
+              uiFontSize:
+                settings.uiFontSize ??
+                LEGACY_UI_FONT_SIZE[legacyFontSize ?? "medium"],
               timestampTimeZone: normalizeTimeZone(settings.timestampTimeZone),
             });
           }
@@ -165,7 +214,10 @@ const getPersistedSettings = (settings: SettingsState) => ({
   expandSidebar: settings.expandSidebar,
   monacoEditorCDN: settings.monacoEditorCDN,
   chatStyle: settings.chatStyle,
-  fontSize: settings.fontSize,
+  uiFontSize: settings.uiFontSize,
+  editorFontSize: settings.editorFontSize,
+  uiFontFamily: settings.uiFontFamily,
+  codeFontFamily: settings.codeFontFamily,
   colorTheme: settings.colorTheme,
   timestampDecoderEnabled: settings.timestampDecoderEnabled,
   timestampTimeZone: settings.timestampTimeZone,

@@ -31,7 +31,7 @@ type StyleProps = {
   disableAnimation?: boolean;
 };
 const buttonVariants = cva(
-  "ui-button inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-[length:var(--font-size-button,13px)] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-45 [&_svg]:size-4",
+  "ui-button inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-[0.8125rem] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-45 [&_svg]:size-4",
   {
     variants: {
       variant: {
@@ -45,7 +45,7 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-8 px-3",
-        sm: "h-7 px-2 text-[length:var(--font-size-button,13px)]",
+        sm: "h-7 px-2 text-[0.8125rem]",
         lg: "h-9 px-4",
         icon: "size-8 p-0",
       },
@@ -228,7 +228,7 @@ export function Input({
           readOnly={isReadOnly || props.readOnly}
           aria-invalid={isInvalid}
           className={cn(
-            "w-full min-w-0 bg-transparent py-1.5 text-[13px] outline-none placeholder:text-muted-foreground disabled:opacity-50",
+            "w-full min-w-0 bg-transparent py-1.5 text-[0.8125rem] outline-none placeholder:text-muted-foreground disabled:opacity-50",
             classNames?.input,
           )}
           onChange={(e) => {
@@ -308,7 +308,7 @@ export function Textarea({
         disabled={isDisabled || props.disabled}
         readOnly={isReadOnly || props.readOnly}
         aria-invalid={isInvalid}
-        className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-[0.8125rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onChange={(e) => {
           onChange?.(e);
           onValueChange?.(e.target.value);
@@ -331,7 +331,7 @@ export function Chip({
     <span
       {...domProps(props)}
       className={cn(
-        "inline-flex items-center rounded-md border border-border bg-secondary px-1.5 py-0.5 text-[11px] font-medium text-secondary-foreground",
+        "inline-flex items-center rounded-md border border-border bg-secondary px-1.5 py-0.5 text-[0.6875rem] font-medium text-secondary-foreground",
         className,
       )}
     >
@@ -762,7 +762,7 @@ export function DropdownItem({
         onClick?.();
       }}
       className={cn(
-        "flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-[13px] outline-none focus:bg-accent data-[disabled]:pointer-events-none data-[disabled]:opacity-40",
+        "flex cursor-default items-center gap-2 rounded-md px-2 py-1.5 text-[0.8125rem] outline-none focus:bg-accent data-[disabled]:pointer-events-none data-[disabled]:opacity-40",
         className,
       )}
       {...domProps(
@@ -807,7 +807,7 @@ export function Switch({
   const id = useId();
   return (
     <label
-      className={cn("inline-flex items-center gap-2 text-[13px]", className)}
+      className={cn("inline-flex items-center gap-2 text-[0.8125rem]", className)}
       htmlFor={props.id || id}
     >
       <SwitchPrimitive.Root
@@ -845,7 +845,7 @@ export function Checkbox({
   "aria-label"?: string;
 }) {
   return (
-    <label className={cn("flex items-center gap-2 text-[13px]", className)}>
+    <label className={cn("flex items-center gap-2 text-[0.8125rem]", className)}>
       <CheckboxPrimitive.Root
         aria-label={props["aria-label"]}
         checked={isIndeterminate ? "indeterminate" : isSelected}
@@ -925,7 +925,7 @@ export function Select({
         <SelectPrimitive.Trigger
           id={props.id || id}
           aria-label={props["aria-label"]}
-          className="flex min-h-8 w-full items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1 text-[13px] focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex min-h-8 w-full items-center gap-2 rounded-md border border-input bg-background px-2.5 py-1 text-[0.8125rem] focus-visible:ring-2 focus-visible:ring-ring"
         >
           {startContent}
           <SelectPrimitive.Value placeholder={placeholder} />
@@ -944,7 +944,7 @@ export function Select({
                 <SelectPrimitive.Item
                   key={item.key}
                   value={String(item.key)}
-                  className="relative flex cursor-default items-center gap-2 rounded px-2 py-1.5 pr-7 text-[13px] outline-none focus:bg-accent"
+                  className="relative flex cursor-default items-center gap-2 rounded px-2 py-1.5 pr-7 text-[0.8125rem] outline-none focus:bg-accent"
                 >
                   {item.props.startContent}
                   <SelectPrimitive.ItemText>

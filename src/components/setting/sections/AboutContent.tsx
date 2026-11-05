@@ -124,7 +124,7 @@ export function AboutContent() {
               <h3 className="text-base font-semibold text-foreground">
                 Datamorph
               </h3>
-              <p className="text-[12px] text-muted-foreground">
+              <p className="text-[0.75rem] text-muted-foreground">
                 一源万构，形随需变。面向开发者的数据处理工作台。
               </p>
             </div>
@@ -140,7 +140,7 @@ export function AboutContent() {
         <dl className="grid gap-4 p-4 sm:grid-cols-3">
           <div className="min-w-0">
             <dt className="text-xs text-muted-foreground">当前版本</dt>
-            <dd className="mt-1 text-[13px] font-medium">
+            <dd className="mt-1 text-[0.8125rem] font-medium">
               {APP_BUILD_INFO.version ? (
                 <ExternalLink
                   showUrl
@@ -156,7 +156,7 @@ export function AboutContent() {
           </div>
           <div className="min-w-0">
             <dt className="text-xs text-muted-foreground">提交</dt>
-            <dd className="mt-1 text-[13px] font-medium">
+            <dd className="mt-1 text-[0.8125rem] font-medium">
               {APP_BUILD_INFO.commitSha ? (
                 <ExternalLink
                   showUrl
@@ -173,7 +173,7 @@ export function AboutContent() {
           </div>
           <div className="min-w-0">
             <dt className="text-xs text-muted-foreground">构建时间</dt>
-            <dd className="mt-1 text-[13px] font-medium">
+            <dd className="mt-1 text-[0.8125rem] font-medium">
               {APP_BUILD_INFO.builtAt ? (
                 <time dateTime={APP_BUILD_INFO.builtAt}>
                   {dateFormat.format(new Date(APP_BUILD_INFO.builtAt))}
@@ -187,7 +187,7 @@ export function AboutContent() {
         <div className="flex flex-col gap-3 border-t border-border/60 p-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 flex-1">
             <div aria-live="polite" role="status">
-              <p className="text-[13px] font-medium">
+              <p className="text-[0.8125rem] font-medium">
                 {checkState.status === "error"
                   ? checkState.message
                   : checkState.status === "checking"
@@ -246,7 +246,7 @@ export function AboutContent() {
                 <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-success text-white">
                   <Icon icon={f.icon} width={18} />
                 </div>
-                <span className="text-[13px] font-medium text-foreground">
+                <span className="text-[0.8125rem] font-medium text-foreground">
                   {f.label}
                 </span>
               </div>
@@ -268,7 +268,7 @@ export function AboutContent() {
                   <Icon icon={l.icon} width={18} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <span className="block text-[13px] font-medium text-foreground">
+                  <span className="block text-[0.8125rem] font-medium text-foreground">
                     {l.label}
                   </span>
                 </div>
@@ -283,7 +283,7 @@ export function AboutContent() {
         </div>
       </div>
 
-      <p className="mt-6 text-center text-[12px] text-muted-foreground">
+      <p className="mt-6 text-center text-[0.75rem] text-muted-foreground">
         © {new Date().getFullYear()} Datamorph · 基于 React、TypeScript 和
         shadcn/ui 构建
       </p>

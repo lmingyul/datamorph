@@ -44,7 +44,7 @@ export function SectionHeader({ title, description }: SectionHeaderProps) {
         {title}
       </h2>
       {description ? (
-        <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground sm:text-[13px]">
+        <p className="mt-1 text-[0.78125rem] leading-relaxed text-muted-foreground sm:text-[0.8125rem]">
           {description}
         </p>
       ) : null}
@@ -59,7 +59,7 @@ interface GroupLabelProps {
 /** 分组小标题：小号大写灰字，仿 macOS 设置的分组标签 */
 export function GroupLabel({ children }: GroupLabelProps) {
   return (
-    <h4 className="mb-2 mt-5 px-3 text-[11.5px] font-medium text-muted-foreground first:mt-0">
+    <h4 className="mb-2 mt-5 px-3 text-[0.71875rem] font-medium text-muted-foreground first:mt-0">
       {children}
     </h4>
   );
@@ -129,9 +129,9 @@ export function SettingRow({
           <Icon icon={icon} width={18} />
         </div>
         <div className="min-w-0">
-          <p className="text-[13px] font-medium text-foreground">{title}</p>
+          <p className="text-[0.8125rem] font-medium text-foreground">{title}</p>
           {description ? (
-            <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+            <p className="mt-0.5 text-[0.75rem] leading-relaxed text-muted-foreground">
               {description}
             </p>
           ) : null}
@@ -179,7 +179,7 @@ export function InfoNote({
         icon={icon}
         width={18}
       />
-      <div className="text-[12px] leading-relaxed text-muted-foreground">
+      <div className="text-[0.75rem] leading-relaxed text-muted-foreground">
         {title ? (
           <p
             className={cn(
@@ -282,7 +282,7 @@ export function FormField({
   return (
     <div className="space-y-2">
       <label
-        className="flex items-center gap-2 text-[12.5px] font-medium text-foreground"
+        className="flex items-center gap-2 text-[0.78125rem] font-medium text-foreground"
         htmlFor={id}
       >
         {icon ? (
@@ -302,7 +302,7 @@ export function FormField({
 
 export function InlineCode({ children }: { children: ReactNode }) {
   return (
-    <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+    <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[0.6875rem] text-foreground">
       {children}
     </code>
   );

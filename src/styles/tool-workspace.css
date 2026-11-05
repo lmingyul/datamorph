@@ -25,7 +25,7 @@
 .tool-workspace-heading p {
   margin-top: 4px;
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .tool-workspace-toolbar {
   padding: 9px 12px;
@@ -46,7 +46,7 @@
 }
 .tool-workspace-status {
   color: var(--muted-foreground);
-  font-size: 12px;
+  font-size: 0.75rem;
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -80,7 +80,7 @@
   padding-block: 2px;
 }
 .tool-panel-header h2 {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 .tool-panel-body,
@@ -96,7 +96,7 @@
 .tool-review-footer {
   padding: 8px 12px;
   border-top: 1px solid var(--border);
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted-foreground);
   flex-shrink: 0;
 }
@@ -110,7 +110,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   border-bottom: 1px solid var(--border);
   background: var(--surface);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .tool-diff-labels > div {
   min-height: 32px;
@@ -126,7 +126,7 @@
 }
 .tool-diff-labels span + span {
   color: var(--muted-foreground);
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 .tool-conversion-layout {
   display: grid;
@@ -149,7 +149,7 @@
 }
 .tool-field-label,
 .tool-sidebar-title {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--muted-foreground);
 }
@@ -191,7 +191,7 @@
   border: 1px solid transparent;
   border-radius: 7px;
   text-align: left;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .tool-format-option:hover {
   background: var(--secondary);
@@ -203,7 +203,7 @@
 }
 .tool-format-option small {
   display: block;
-  font-size: 11px;
+  font-size: 0.6875rem;
   margin-top: 2px;
   color: var(--muted-foreground);
 }
@@ -250,7 +250,7 @@
   flex-shrink: 0;
   border: 1px solid var(--border);
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 .tool-examples summary {
   padding: 10px 12px;
@@ -278,7 +278,7 @@
   color: var(--primary);
   overflow-wrap: anywhere;
   margin-top: 4px;
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 .query-console > .jsonpath-query-area {
   order: -1;

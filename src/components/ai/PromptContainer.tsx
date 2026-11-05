@@ -526,7 +526,7 @@ const PromptContainer = forwardRef<PromptContainerRef, PromptContainerProps>(
                         <span className="block text-xs font-medium">
                           {item.label}
                         </span>
-                        <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
+                        <span className="mt-0.5 block text-[0.6875rem] font-normal text-muted-foreground">
                           {item.detail}
                         </span>
                       </span>
@@ -595,7 +595,7 @@ const PromptContainer = forwardRef<PromptContainerRef, PromptContainerProps>(
               </div>
             </div>
           </form>
-          <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+          <div className="mt-2 flex items-center justify-between gap-2 text-[0.625rem] text-muted-foreground">
             <span className="ml-auto">{prompt.length} 字</span>
           </div>
         </div>

@@ -90,7 +90,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
                 <AlertCircle size={22} strokeWidth={1.7} />
               </div>
               <div className="min-w-0">
-                <ModalHeader className="p-0 text-[17px] font-semibold tracking-tight">
+                <ModalHeader className="p-0 text-[1.0625rem] font-semibold tracking-tight">
                   JSON 解析失败
                 </ModalHeader>
                 <p className="json-error-description">{description}</p>

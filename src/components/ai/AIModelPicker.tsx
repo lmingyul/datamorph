@@ -207,7 +207,7 @@ export default function AIModelPicker({
             role="group"
             aria-label={`${AI_ROUTE_LABELS[browseRoute]}模型`}
           >
-            <p className="mb-2 px-2 text-[11px] text-muted-foreground">
+            <p className="mb-2 px-2 text-[0.6875rem] text-muted-foreground">
               {AI_ROUTE_LABELS[browseRoute]}
             </p>
             {loading && (

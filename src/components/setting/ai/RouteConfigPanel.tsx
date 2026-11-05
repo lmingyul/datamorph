@@ -92,7 +92,7 @@ function PromoBanner() {
     <div className="rounded-lg border border-primary/20 bg-primary/10 p-3">
       <div className="flex items-center gap-2.5">
         <Icon className="text-primary" icon="solar:star-bold" width={20} />
-        <span className="text-[13px] font-medium text-primary">
+        <span className="text-[0.8125rem] font-medium text-primary">
           SSOOAI API 服务
         </span>
       </div>

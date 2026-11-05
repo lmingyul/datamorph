@@ -219,7 +219,7 @@
   border-left: 2px solid var(--diagnostic-accent);
   background: var(--diagnostic-background);
   color: var(--diagnostic-foreground);
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.5;
 }
 .editor-diagnostic-icon {
@@ -248,7 +248,7 @@
 }
 .editor-diagnostic-location {
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-variant-numeric: tabular-nums;
 }
 .editor-diagnostic-description {
@@ -270,7 +270,7 @@
 .editor-diagnostic-actions .ui-button {
   height: 26px;
   padding: 0 8px;
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 .editor-diagnostic-actions .ui-button svg {
   width: 13px;

@@ -91,7 +91,7 @@ export default function JsonPathHelp({
                   <code className="mt-1 block break-all font-mono text-xs text-primary">
                     {example.path}
                   </code>
-                  <span className="mt-1 block text-[11px] text-muted-foreground">
+                  <span className="mt-1 block text-[0.6875rem] text-muted-foreground">
                     {example.description}
                   </span>
                 </button>

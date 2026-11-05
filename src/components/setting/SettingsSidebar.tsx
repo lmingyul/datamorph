@@ -33,7 +33,7 @@ export function SettingsSidebar({
       {/* 标题区 */}
       <div className="flex flex-wrap items-center justify-center gap-1 px-2 pb-2 pt-3 md:justify-between md:px-3">
         <WorkspaceNavigationTrigger />
-        <p className="hidden text-[10.5px] font-medium text-muted-foreground md:block">
+        <p className="hidden text-[0.65625rem] font-medium text-muted-foreground md:block">
           设置
         </p>
         <WorkspaceSearchTrigger compact />
@@ -55,7 +55,7 @@ export function SettingsSidebar({
               onClick={() => onSelect(item.key)}
             >
               <Icon className="flex-shrink-0" icon={item.icon} width={18} />
-              <span className="hidden truncate text-[12px] font-medium md:inline">
+              <span className="hidden truncate text-[0.75rem] font-medium md:inline">
                 {item.label}
               </span>
             </button>

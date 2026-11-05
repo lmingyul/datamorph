@@ -93,7 +93,7 @@ const AIPromptOverlay: React.FC<AIPromptOverlayProps> = ({
             <Orbit className="size-4" />
           </span>
           AI 助手
-          <span className="ml-auto mr-6 text-[10px] font-normal tracking-[0.18em] text-muted-foreground">
+          <span className="ml-auto mr-6 text-[0.625rem] font-normal tracking-[0.18em] text-muted-foreground">
             JSON COPILOT
           </span>
         </ModalHeader>
