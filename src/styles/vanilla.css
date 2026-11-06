@@ -1,4 +1,6 @@
-/* Dedicated tree engine adapter: use the same tokens as the workbench. */
+/* Dedicated tree engine adapter: use the same tokens as the workbench.
+   Rules below double the root class: the library injects its own <style> at runtime,
+   which lands after this file in production builds and wins any specificity tie. */
 .vanilla-json-editor {
   --jse-theme-color: var(--primary);
   --jse-theme-color-highlight: var(--primary);
@@ -35,19 +37,67 @@
   --jse-button-secondary-background: var(--secondary);
   --jse-button-secondary-color: var(--foreground);
 }
-.vanilla-json-editor .jse-contents {
+.vanilla-json-editor.vanilla-json-editor .jse-contents {
   border: 0;
 }
-.vanilla-json-editor .jse-menu {
+.vanilla-json-editor.vanilla-json-editor .jse-menu {
   background: var(--muted);
   color: var(--foreground);
   border: 0;
   border-bottom: 1px solid var(--border);
   padding: 4px 10px;
   gap: 3px;
+  /* 与编辑器并排时只有半宽：保持单行，放不下时横向滚动而不是折成两行 */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
-.vanilla-json-editor .jse-menu .jse-button,
-.vanilla-json-editor .jse-menu .jse-group-button {
+.vanilla-json-editor.vanilla-json-editor .jse-menu::-webkit-scrollbar {
+  display: none;
+}
+.vanilla-json-editor.vanilla-json-editor .jse-menu > * {
+  flex-shrink: 0;
+}
+/* 树形模式：工具栏改为贴右侧的竖排工具条，把顶部高度留给内容 */
+.vanilla-json-editor.vanilla-json-editor .jse-tree-mode {
+  padding-right: 40px;
+}
+.vanilla-json-editor.vanilla-json-editor .jse-tree-mode > .jse-menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 0;
+  gap: 2px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-bottom: 0;
+  border-left: 1px solid var(--border);
+}
+.vanilla-json-editor.vanilla-json-editor
+  .jse-tree-mode
+  > .jse-menu
+  .jse-button {
+  width: 28px;
+  padding: 0;
+  justify-content: center;
+}
+.vanilla-json-editor.vanilla-json-editor
+  .jse-tree-mode
+  > .jse-menu
+  .jse-separator {
+  width: 18px;
+  height: 1px;
+  margin: 4px 0;
+}
+.vanilla-json-editor.vanilla-json-editor .jse-tree-mode > .jse-menu .jse-space {
+  display: none;
+}
+.vanilla-json-editor.vanilla-json-editor .jse-menu .jse-button,
+.vanilla-json-editor.vanilla-json-editor .jse-menu .jse-group-button {
   background: transparent;
   color: var(--muted-foreground);
   border: 0;
@@ -55,36 +105,38 @@
   min-height: 28px;
   margin: 0;
 }
-.vanilla-json-editor .jse-menu .jse-selected,
-.vanilla-json-editor .jse-menu .jse-button:hover,
-.vanilla-json-editor .jse-menu .jse-group-button:hover {
+.vanilla-json-editor.vanilla-json-editor .jse-menu .jse-selected,
+.vanilla-json-editor.vanilla-json-editor .jse-menu .jse-button:hover,
+.vanilla-json-editor.vanilla-json-editor .jse-menu .jse-group-button:hover {
   background: var(--accent);
   color: var(--primary);
 }
-.vanilla-json-editor .jse-menu .jse-button:disabled {
+.vanilla-json-editor.vanilla-json-editor .jse-menu .jse-button:disabled {
   opacity: 0.4;
 }
-.vanilla-json-editor .jse-menu .jse-separator {
+.vanilla-json-editor.vanilla-json-editor .jse-menu .jse-separator {
   background: var(--border);
 }
-.vanilla-json-editor .jse-menu button:focus-visible {
+.vanilla-json-editor.vanilla-json-editor .jse-menu button:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: -2px;
 }
-.vanilla-json-editor .jse-table-mode-welcome {
+.vanilla-json-editor.vanilla-json-editor .jse-table-mode-welcome {
   border: 0;
 }
-.vanilla-json-editor .jse-action {
+.vanilla-json-editor.vanilla-json-editor .jse-action {
   border-radius: 6px;
 }
-.vanilla-json-editor .jse-menu .jse-group-button {
+.vanilla-json-editor.vanilla-json-editor .jse-menu .jse-group-button {
   border: 0 !important;
   background: transparent !important;
   color: var(--muted-foreground) !important;
   border-radius: 6px;
   padding: 0 8px;
 }
-.vanilla-json-editor .jse-menu .jse-group-button.jse-selected {
+.vanilla-json-editor.vanilla-json-editor
+  .jse-menu
+  .jse-group-button.jse-selected {
   background: var(--accent) !important;
   color: var(--primary) !important;
 }

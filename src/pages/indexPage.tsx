@@ -62,6 +62,7 @@ import MonacoDiffEditor, {
   type MonacoDiffEditorRef,
 } from "@/components/monacoEditor/MonacoDiffEditor";
 import LanguageSelector from "@/components/monacoEditor/LanguageSelector";
+import ResizableEditorLayout from "@/components/layout/ResizableEditorLayout";
 import {
   useTabStore,
   downloadRecoveryData,
@@ -251,8 +252,10 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
     ["table", "表格", Table2],
     ["graph", "节点图", Workflow],
   ];
-  const structuredView =
-    view === "tree" || view === "table" || view === "graph";
+  // 树形、表格与编辑器左右并排；节点图仍独占整个工作区
+  const splitView = view === "tree" || view === "table";
+  const editorVisible = view === "code" || splitView;
+  const structuredView = view === "graph";
   const update = useCallback(
     (content: string, changes?: readonly TextChange[]) =>
       useTabStore.getState().updateTabContent(tab.key, content, changes),
@@ -385,7 +388,7 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
             ) : undefined
           }
           endContent={
-            view === "code" || view === "diff" ? (
+            editorVisible || view === "diff" ? (
               <span
                 ref={setSettingsTarget}
                 className="flex shrink-0 items-center"
@@ -401,7 +404,7 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
                 setWelcome(false);
                 if (view === "diff") diff.current?.showAiPrompt();
                 else {
-                  if (view !== "code") store.setView(tab.key, "code");
+                  if (!editorVisible) store.setView(tab.key, "code");
                   setTimeout(() => editor.current?.showAiPrompt(), 100);
                 }
               },
@@ -414,7 +417,7 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
                     icon: WandSparkles,
                     disabled: busy,
                     onPress: () => {
-                      if (view === "code") {
+                      if (editorVisible) {
                         editor.current?.format();
                         setWelcome(false);
                       } else void action("format");
@@ -526,74 +529,87 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
       )}
       <div className="relative min-h-0 flex-1">
         <Suspense fallback={<Loading />}>
-          {view === "code" && (
-            <WorkspaceWelcome
-              active={welcome}
-              title={tab.title}
-              hasContent={!!tab.content.trim()}
-              busy={busy}
-              onFocus={() => editor.current?.focus()}
-              onSample={() => {
-                if (editor.current) editor.current.updateValue(JsonSample);
-                else update(JsonSample);
-                setWelcome(false);
-              }}
-              onStart={() => {
-                setWelcome(false);
-                editor.current?.focus();
-              }}
-              onContinue={() => {
-                setWelcome(false);
-                editor.current?.focus();
-              }}
+          {editorVisible && (
+            <ResizableEditorLayout
+              autoSaveId="datamorph:document-split"
+              minLeftWidth={25}
+              maxLeftWidth={75}
             >
-              <MonacoDataEditor
-                ref={editor}
-                tabKey={tab.key}
-                tabTitle={tab.title}
-                documentId={tab.key}
-                language={tab.editorSettings.language}
-                languageMode={tab.editorSettings.languageMode}
-                filename={tab.editorSettings.filename}
-                theme={theme}
-                height="100%"
-                isMenu
-                settingsBarTarget={settingsTarget}
-                showJsonPathFilter={!welcome}
-                statusBarTarget={statusTarget}
-                languageBarTarget={languageTarget}
-                indentationBarTarget={indentationTarget}
-                onUpdateValue={update}
-              />
-            </WorkspaceWelcome>
-          )}
-          {view === "tree" && (
-            <TreeEditor
-              tabKey={tab.key}
-              content={treeContent}
-              onUpdateValue={(value) =>
-                update(
-                  "text" in value
-                    ? value.text
-                    : stringifyJson(value.json, tab.editorSettings.indentSize),
-                )
-              }
-            />
-          )}{" "}
-          {view === "table" && (
-            <TableView
-              ref={table}
-              data={tab.content}
-              onDataUpdate={update}
-              onCopy={tableCopy}
-            />
+              <WorkspaceWelcome
+                active={welcome && view === "code"}
+                title={tab.title}
+                hasContent={!!tab.content.trim()}
+                busy={busy}
+                onFocus={() => editor.current?.focus()}
+                onSample={() => {
+                  if (editor.current) editor.current.updateValue(JsonSample);
+                  else update(JsonSample);
+                  setWelcome(false);
+                }}
+                onStart={() => {
+                  setWelcome(false);
+                  editor.current?.focus();
+                }}
+                onContinue={() => {
+                  setWelcome(false);
+                  editor.current?.focus();
+                }}
+              >
+                <MonacoDataEditor
+                  ref={editor}
+                  tabKey={tab.key}
+                  tabTitle={tab.title}
+                  documentId={tab.key}
+                  language={tab.editorSettings.language}
+                  languageMode={tab.editorSettings.languageMode}
+                  filename={tab.editorSettings.filename}
+                  theme={theme}
+                  height="100%"
+                  isMenu
+                  settingsBarTarget={settingsTarget}
+                  showJsonPathFilter={!welcome || view !== "code"}
+                  statusBarTarget={statusTarget}
+                  languageBarTarget={languageTarget}
+                  indentationBarTarget={indentationTarget}
+                  onUpdateValue={update}
+                />
+              </WorkspaceWelcome>
+              {splitView && (
+                // 右侧懒加载单独挂 Suspense，避免首次打开时把左侧编辑器一起替换成加载态
+                <Suspense fallback={<Loading />}>
+                  {view === "tree" ? (
+                    <TreeEditor
+                      tabKey={tab.key}
+                      content={treeContent}
+                      onUpdateValue={(value) =>
+                        update(
+                          "text" in value
+                            ? value.text
+                            : stringifyJson(
+                                value.json,
+                                tab.editorSettings.indentSize,
+                              ),
+                        )
+                      }
+                    />
+                  ) : (
+                    <TableView
+                      ref={table}
+                      data={tab.content}
+                      onDataUpdate={update}
+                      onCopy={tableCopy}
+                    />
+                  )}
+                </Suspense>
+              )}
+            </ResizableEditorLayout>
           )}
           {view === "graph" && (
             <GraphView
               data={tab.content}
               onEdit={() => store.setView(tab.key, "code")}
             />
-          )}{" "}
+          )}
           {view === "diff" && (
             <MonacoDiffEditor
               ref={diff}
@@ -629,7 +645,7 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
             onClick={() => {
               if (validation.error) {
                 const { line, column } = validation.error;
-                store.setView(tab.key, "code");
+                if (!editorVisible) store.setView(tab.key, "code");
                 setTimeout(
                   () =>
                     window.dispatchEvent(
@@ -694,7 +710,11 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
                 ? `${(fileBytes / 1024).toFixed(1)} KB`
                 : `${(fileBytes / 1048576).toFixed(1)} MB`}
           </span>
-          <span key={view} ref={setLanguageTarget} className="inline-flex">
+          <span
+            key={editorVisible ? "editor" : view}
+            ref={setLanguageTarget}
+            className="inline-flex"
+          >
             {structuredView && (
               <LanguageSelector
                 language={tab.editorSettings.language}
@@ -709,7 +729,7 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
             )}
           </span>
           <span
-            key={`indentation-${view}`}
+            key={`indentation-${editorVisible ? "editor" : view}`}
             ref={setIndentationTarget}
             className="status-secondary inline-flex"
           >

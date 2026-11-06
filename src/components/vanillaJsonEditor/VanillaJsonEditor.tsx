@@ -10,6 +10,8 @@ import {
   type JsonEditor,
   type Content,
   type JSONEditorSelection,
+  type MenuItem,
+  type RenderMenuContext,
 } from "vanilla-jsoneditor-cn";
 import {
   parse as parseLossless,
@@ -97,6 +99,22 @@ export default function VanillaJsonEditor({
           callback.current?.(next);
         },
         onChangeMode: (value: Mode) => modeCallback.current?.(value),
+        // 编辑器和表格在外层已有入口，树形里不再放模式切换。文本模式保留切换按钮：
+        // 无效 JSON 点「手动修复」会进入文本模式，没有按钮就回不到树形。
+        onRenderMenu: (
+          items: MenuItem[],
+          { mode: current }: RenderMenuContext,
+        ) => {
+          if (current !== Mode.tree) return items;
+          const rest = items.filter(
+            (item) =>
+              !(
+                item.type === "button" &&
+                item.className?.includes("jse-group-button")
+              ),
+          );
+          return rest[0]?.type === "separator" ? rest.slice(1) : rest;
+        },
       },
     });
     instance.current = editor;

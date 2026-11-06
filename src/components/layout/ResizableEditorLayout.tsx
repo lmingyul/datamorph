@@ -13,6 +13,7 @@ interface Props {
   onResizeComplete?: (size: number) => void;
   resizeHandle?: ReactNode;
   isStacked?: boolean;
+  autoSaveId?: string;
 }
 export default function ResizableEditorLayout({
   leftPanel,
@@ -25,6 +26,7 @@ export default function ResizableEditorLayout({
   onResize,
   onResizeComplete,
   isStacked = false,
+  autoSaveId,
 }: Props) {
   const [narrow, setNarrow] = useState(() => window.innerWidth < 768);
   useEffect(() => {
@@ -40,15 +42,20 @@ export default function ResizableEditorLayout({
     <PanelGroup
       direction={vertical ? "vertical" : "horizontal"}
       className={cn("h-full min-h-0 w-full", className)}
+      autoSaveId={autoSaveId}
       onLayout={(sizes) => {
         onResize?.(sizes[0]);
         onResizeComplete?.(sizes[0]);
       }}
     >
+      {/* id/order let the second panel mount and unmount without remounting the first.
+          The upper bound lives on the second panel's minSize: changing this panel's
+          maxSize in the same commit as adding a panel crashes react-resizable-panels. */}
       <Panel
+        id="primary"
+        order={1}
         defaultSize={initialLeftWidth}
         minSize={minLeftWidth}
-        maxSize={panels.length > 1 ? maxLeftWidth : 100}
       >
         <div className="h-full min-h-0 overflow-hidden">{panels[0]}</div>
       </Panel>
@@ -61,7 +68,7 @@ export default function ResizableEditorLayout({
               vertical ? "h-1" : "w-1",
             )}
           />
-          <Panel minSize={100 - maxLeftWidth}>
+          <Panel id="secondary" order={2} minSize={100 - maxLeftWidth}>
             <div className="h-full min-h-0 overflow-hidden">{panels[1]}</div>
           </Panel>
         </>
