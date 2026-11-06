@@ -1,4 +1,5 @@
 import { useEditorFont } from "@/hooks/useEditorFont";
+import { useViewZoom, type ZoomView } from "@/store/useViewZoomStore";
 import { EDITOR_FONT_SIZE } from "@/styles/fonts";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import AIAssistantHeader from "@/components/ai/AIAssistantHeader";
@@ -103,6 +104,8 @@ export interface MonacoDataEditorProps {
   languageBarTarget?: HTMLElement | null;
   indentationBarTarget?: HTMLElement | null;
   settingsBarTarget?: HTMLElement | null;
+  /** 工作区视图的缩放档位，未传时不缩放 */
+  zoomView?: ZoomView;
   showJsonPathFilter?: boolean; // 是否显示 JSONPath 查询功能
   queryLayout?: "inline" | "console";
   onUpdateValue: (
@@ -154,6 +157,7 @@ export default function MonacoDataEditor({
   languageBarTarget,
   indentationBarTarget,
   settingsBarTarget,
+  zoomView,
   customQuickPrompts,
   onUpdateValue,
   onMount,
@@ -181,7 +185,8 @@ export default function MonacoDataEditor({
   const [busy, setBusy] = useState(false);
   const showBusy = useDelayedVisibility(busy);
   const stored = useTabStore.getState().getTabByKey(owner)?.editorSettings;
-  const { fontSize, fontFamily } = useEditorFont();
+  const { fontSize: baseFontSize, fontFamily } = useEditorFont();
+  const fontSize = Math.round(baseFontSize * useViewZoom(zoomView));
   const setFontSize = useSettingsStore((s) => s.setEditorFontSize);
   const indentation = useEditorIndentation(owner, ready, () => {
     const model = editor.current?.getModel();
@@ -872,7 +877,7 @@ export default function MonacoDataEditor({
                 toolbarTarget={settingsBarTarget}
                 containerRef={root}
                 tabKey={owner}
-                currentFontSize={fontSize}
+                currentFontSize={baseFontSize}
                 currentIndentSize={indent}
                 currentIndentMode={indentation.indentMode}
                 insertSpaces={indentation.insertSpaces}

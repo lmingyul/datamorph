@@ -11,6 +11,7 @@ import React, {
 import { Icon } from "@/components/ui/icon";
 import { isLosslessNumber } from "lossless-json";
 import { parseJson } from "@/utils/json";
+import { useViewZoom } from "@/store/useViewZoomStore";
 import toast from "@/utils/toast";
 
 import JsonPathBar from "@/components/jsonTable/JsonPathBar.tsx";
@@ -168,7 +169,7 @@ function CellEditor({
     <textarea
       ref={area}
       aria-label={target.kind === "value" ? "编辑值" : "编辑键名"}
-      className="block resize-none rounded-sm bg-background px-1 font-[inherit] text-sm leading-6 text-foreground outline-none"
+      className="block resize-none rounded-sm bg-background px-1 font-[inherit] text-[1em] leading-[1.7143] text-foreground outline-none"
       rows={1}
       spellCheck={false}
       style={{ width: target.width }}
@@ -226,6 +227,7 @@ const JsonTable: React.FC<JsonTableProps> = ({
     null,
   );
   const hovered = useRef<HTMLElement | null>(null);
+  const zoom = useViewZoom("table");
   const live = useRef<{ base: any; pushed: string; timer: number } | null>(
     null,
   );
@@ -578,7 +580,7 @@ const JsonTable: React.FC<JsonTableProps> = ({
               transition: "transform 0.2s ease",
               transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
             }}
-            width={16}
+            width={Math.round(16 * zoom)}
           />
           <span className="whitespace-nowrap">
             {Array.isArray(value) ? (
@@ -710,13 +712,13 @@ const JsonTable: React.FC<JsonTableProps> = ({
                   className={`${isSelected ? "!bg-border/60" : ""} hover:bg-muted`}
                 >
                   <td
-                    className={`px-2 text-sm font-medium border border-input cursor-text ${CELL_HIGHLIGHT}`}
+                    className={`px-2 text-[1em] font-medium border border-input cursor-text ${CELL_HIGHLIGHT}`}
                     {...cellProps(valuePath, keyEdit)}
                   >
                     {cellEditor(keyEdit) ?? key}
                   </td>
                   <td
-                    className={`px-2 text-sm border border-input ${valueEdit ? "cursor-text" : "cursor-pointer"} ${CELL_HIGHLIGHT}`}
+                    className={`px-2 text-[1em] border border-input ${valueEdit ? "cursor-text" : "cursor-pointer"} ${CELL_HIGHLIGHT}`}
                     style={{ minWidth: "30px" }}
                     {...cellProps(valuePath, valueEdit)}
                   >
@@ -789,13 +791,13 @@ const JsonTable: React.FC<JsonTableProps> = ({
                   className={`${isSelected ? "!bg-border/60" : ""} hover:bg-muted`}
                 >
                   <td
-                    className="px-2 text-sm border border-input cursor-pointer"
+                    className="px-2 text-[1em] border border-input cursor-pointer"
                     onClick={(e) => handleElementClick(itemPath, e)}
                   >
                     {originalIndex}
                   </td>
                   <td
-                    className={`px-2 text-sm border border-input ${valueEdit ? "cursor-text" : "cursor-pointer"} ${CELL_HIGHLIGHT}`}
+                    className={`px-2 text-[1em] border border-input ${valueEdit ? "cursor-text" : "cursor-pointer"} ${CELL_HIGHLIGHT}`}
                     style={{ minWidth: "30px" }}
                     {...cellProps(itemPath, valueEdit)}
                   >
@@ -859,7 +861,7 @@ const JsonTable: React.FC<JsonTableProps> = ({
           <thead>
             <tr className="bg-muted">
               <th
-                className={`${isPathSelected(path) ? "!bg-border/60" : ""} px-2 text-left text-sm font-medium text-muted-foreground border border-input cursor-pointer`}
+                className={`${isPathSelected(path) ? "!bg-border/60" : ""} px-2 text-left text-[1em] font-medium text-muted-foreground border border-input cursor-pointer`}
                 onClick={(e) => handleElementClick(path, e)}
               >
                 #
@@ -886,7 +888,7 @@ const JsonTable: React.FC<JsonTableProps> = ({
                 return (
                   <th
                     key={key}
-                    className={`${isHeaderSelected ? "!bg-border/60" : ""} px-2 text-left text-sm font-medium text-muted-foreground border border-input cursor-text ${CELL_HIGHLIGHT}`}
+                    className={`${isHeaderSelected ? "!bg-border/60" : ""} px-2 text-left text-[1em] font-medium text-muted-foreground border border-input cursor-text ${CELL_HIGHLIGHT}`}
                     {...cellProps(headerPath, columnEdit)}
                   >
                     {columnEditor ?? (
@@ -933,7 +935,7 @@ const JsonTable: React.FC<JsonTableProps> = ({
                   className={`${isSelected ? "!bg-border/60" : ""} hover:bg-muted`}
                 >
                   <td
-                    className="px-2 text-sm border border-input cursor-pointer"
+                    className="px-2 text-[1em] border border-input cursor-pointer"
                     onClick={(e) => handleElementClick(itemPath, e)}
                   >
                     {originalIndex}
@@ -955,7 +957,7 @@ const JsonTable: React.FC<JsonTableProps> = ({
                       return (
                         <td
                           key={key}
-                          className={`${isPathSelected(cellPath) ? "!bg-border/60" : ""} px-2 text-sm border border-input cursor-pointer`}
+                          className={`${isPathSelected(cellPath) ? "!bg-border/60" : ""} px-2 text-[1em] border border-input cursor-pointer`}
                           style={{ minWidth: "30px" }}
                           onClick={(e) => handleElementClick(cellPath, e)}
                         >
@@ -967,7 +969,7 @@ const JsonTable: React.FC<JsonTableProps> = ({
                     return (
                       <td
                         key={key}
-                        className={`${isCellSelected ? "!bg-border/60" : ""} px-2 text-sm border border-input ${valueEdit ? "cursor-text" : "cursor-pointer"} ${CELL_HIGHLIGHT}`}
+                        className={`${isCellSelected ? "!bg-border/60" : ""} px-2 text-[1em] border border-input ${valueEdit ? "cursor-text" : "cursor-pointer"} ${CELL_HIGHLIGHT}`}
                         style={{ minWidth: "30px" }}
                         {...cellProps(cellPath, valueEdit)}
                       >
@@ -1040,7 +1042,9 @@ const JsonTable: React.FC<JsonTableProps> = ({
       <JsonPathBar currentPath={currentPath} />
       <div
         data-table-scroll
-        className="flex-auto min-h-0 overflow-auto p-2"
+        className="flex-auto min-h-0 overflow-auto p-2 leading-[1.4286]"
+        // 单元格字号用 em，跟随这里的缩放档位；路径栏和工具条保持原大小
+        style={{ fontSize: `${0.875 * zoom}rem` }}
         onMouseLeave={handleMouseLeave}
         onFocus={handleMouseOver}
         onMouseOver={handleMouseOver}

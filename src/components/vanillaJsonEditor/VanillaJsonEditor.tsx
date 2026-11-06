@@ -1,5 +1,6 @@
 import { jsonPathLanguage } from "@/utils/jsonPathLanguage";
 import { useTabStore } from "@/store/useTabStore";
+import { useViewZoom, type ZoomView } from "@/store/useViewZoomStore";
 import { useEffect, useRef, useImperativeHandle } from "react";
 import { useTheme } from "next-themes";
 import {
@@ -31,6 +32,8 @@ export interface VanillaJsonEditorProps {
   onUpdateValue?: (value: Content) => void;
   onChangeMode?: (mode: Mode) => void;
   onMount?: () => void;
+  /** 工作区视图的缩放档位，未传时不缩放 */
+  zoomView?: ZoomView;
 }
 const parser = { parse: parseLossless, stringify: stringifyLossless };
 export default function VanillaJsonEditor({
@@ -42,7 +45,9 @@ export default function VanillaJsonEditor({
   onUpdateValue,
   onChangeMode,
   onMount,
+  zoomView,
 }: VanillaJsonEditorProps) {
+  const zoom = useViewZoom(zoomView);
   const container = useRef<HTMLDivElement>(null);
   const instance = useRef<JsonEditor | null>(null);
   const callback = useRef(onUpdateValue);
@@ -167,7 +172,14 @@ export default function VanillaJsonEditor({
     <div
       ref={container}
       className={`vanilla-json-editor h-full ${resolvedTheme === "dark" ? "jse-theme-dark" : ""}`}
-      style={{ height }}
+      // 只缩放内容区字号，顶部/侧边菜单用 --jse-font-size-main-menu，保持原大小
+      style={
+        {
+          height,
+          "--jse-font-size": `calc(0.8125rem * ${zoom})`,
+          "--jse-font-size-mono": `calc(var(--editor-font-size) * ${zoom})`,
+        } as React.CSSProperties
+      }
     />
   );
 }

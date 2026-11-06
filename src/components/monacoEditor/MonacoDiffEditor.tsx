@@ -1,4 +1,5 @@
 import { useEditorFont } from "@/hooks/useEditorFont";
+import { useViewZoom, type ZoomView } from "@/store/useViewZoomStore";
 import { EDITOR_FONT_SIZE } from "@/styles/fonts";
 import { useSettingsStore } from "@/store/useSettingsStore";
 import AIAssistantHeader from "@/components/ai/AIAssistantHeader";
@@ -83,6 +84,8 @@ export interface MonacoDiffEditorProps {
   onLanguagesChange?: (languages: { left: string; right: string }) => void;
   theme?: string;
   settingsBarTarget?: HTMLElement | null;
+  /** 工作区视图的缩放档位，未传时不缩放 */
+  zoomView?: ZoomView;
   languageBarTarget?: HTMLElement | null;
   indentationBarTarget?: HTMLElement | null;
   customQuickPrompts?: QuickPrompt[];
@@ -133,6 +136,7 @@ export default function MonacoDiffEditor({
   onLanguagesChange,
   theme: requestedTheme = "vs-light",
   settingsBarTarget,
+  zoomView,
   languageBarTarget,
   indentationBarTarget,
   height = "100%",
@@ -203,7 +207,8 @@ export default function MonacoDiffEditor({
     if (next !== "auto") setManualLanguage(next);
   }
   const stored = useTabStore.getState().getTabByKey(owner)?.editorSettings;
-  const { fontSize, fontFamily } = useEditorFont();
+  const { fontSize: baseFontSize, fontFamily } = useEditorFont();
+  const fontSize = Math.round(baseFontSize * useViewZoom(zoomView));
   const setFontSize = useSettingsStore((s) => s.setEditorFontSize);
   const indentation = useEditorIndentation(owner, ready, () =>
     diff.current
@@ -572,7 +577,7 @@ export default function MonacoDiffEditor({
               toolbarTarget={settingsBarTarget}
               containerRef={root}
               tabKey={owner}
-              currentFontSize={fontSize}
+              currentFontSize={baseFontSize}
               currentIndentSize={indent}
               currentIndentMode={indentation.indentMode}
               insertSpaces={indentation.insertSpaces}

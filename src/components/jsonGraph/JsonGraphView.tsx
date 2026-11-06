@@ -1,5 +1,6 @@
 import {
   useDeferredValue,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -31,6 +32,7 @@ import {
 import { Button, Tooltip } from "@/components/ui";
 import { useToolState } from "@/components/workspace/ToolContext";
 import clipboard from "@/utils/clipboard";
+import { registerZoomHandler } from "@/store/useViewZoomStore";
 
 // jsoncrack 通过这些 CSS 变量着色，这里接到当前配色的编辑器 token 上，切换主题自动生效
 const CANVAS_STYLE = {
@@ -132,6 +134,16 @@ export default function JsonGraphView({
   );
   const [selection, setSelection] = useState<Selection | null>(null);
   const deferred = useDeferredValue(data);
+  // 节点图是画布缩放：快捷键直接驱动画布，⌘0 等同「适应窗口」
+  useEffect(
+    () =>
+      registerZoomHandler("graph", (action) => {
+        if (action === "in") graph.current?.zoomIn();
+        else if (action === "out") graph.current?.zoomOut();
+        else graph.current?.centerView();
+      }),
+    [],
+  );
   const parsed = useMemo(() => parseDocument(deferred), [deferred]);
   // 统一转成标准 JSON：jsoncrack 只认 JSON（含注释），JSON5 的单引号、无引号键等需先转换
   const json = useMemo(
@@ -203,17 +215,17 @@ export default function JsonGraphView({
         <div className="mx-0.5 h-4 w-px bg-border" />
         <ToolButton
           icon={ZoomOut}
-          label="缩小"
+          label="缩小（⌘/Ctrl -）"
           onPress={() => graph.current?.zoomOut()}
         />
         <ToolButton
           icon={ZoomIn}
-          label="放大"
+          label="放大（⌘/Ctrl +）"
           onPress={() => graph.current?.zoomIn()}
         />
         <ToolButton
           icon={Maximize}
-          label="适应窗口"
+          label="适应窗口（⌘/Ctrl 0）"
           onPress={() => graph.current?.centerView()}
         />
         <ToolButton

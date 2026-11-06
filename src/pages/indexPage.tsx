@@ -82,6 +82,11 @@ import clipboard from "@/utils/clipboard";
 import toast from "@/utils/toast";
 import { useDelayedVisibility } from "@/hooks/useDelayedVisibility";
 import {
+  useViewZoomShortcuts,
+  ViewZoomControl,
+} from "@/components/workspace/ViewZoom";
+import type { ZoomView } from "@/store/useViewZoomStore";
+import {
   documentDownloadName,
   supportsJsonOperations,
   supportsFormatting,
@@ -256,6 +261,12 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
   const splitView = view === "tree" || view === "table";
   const editorVisible = view === "code" || splitView;
   const structuredView = view === "graph";
+  const zoomViews: ZoomView[] = editorVisible
+    ? splitView
+      ? ["editor", view]
+      : ["editor"]
+    : [view === "graph" ? "graph" : "diff"];
+  useViewZoomShortcuts();
   const update = useCallback(
     (content: string, changes?: readonly TextChange[]) =>
       useTabStore.getState().updateTabContent(tab.key, content, changes),
@@ -535,100 +546,111 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
               minLeftWidth={25}
               maxLeftWidth={75}
             >
-              <WorkspaceWelcome
-                active={welcome && view === "code"}
-                title={tab.title}
-                hasContent={!!tab.content.trim()}
-                busy={busy}
-                onFocus={() => editor.current?.focus()}
-                onSample={() => {
-                  if (editor.current) editor.current.updateValue(JsonSample);
-                  else update(JsonSample);
-                  setWelcome(false);
-                }}
-                onStart={() => {
-                  setWelcome(false);
-                  editor.current?.focus();
-                }}
-                onContinue={() => {
-                  setWelcome(false);
-                  editor.current?.focus();
-                }}
-              >
-                <MonacoDataEditor
-                  ref={editor}
-                  tabKey={tab.key}
-                  tabTitle={tab.title}
-                  documentId={tab.key}
-                  language={tab.editorSettings.language}
-                  languageMode={tab.editorSettings.languageMode}
-                  filename={tab.editorSettings.filename}
-                  theme={theme}
-                  height="100%"
-                  isMenu
-                  settingsBarTarget={settingsTarget}
-                  showJsonPathFilter={!welcome || view !== "code"}
-                  statusBarTarget={statusTarget}
-                  languageBarTarget={languageTarget}
-                  indentationBarTarget={indentationTarget}
-                  onUpdateValue={update}
-                />
-              </WorkspaceWelcome>
+              <div data-zoom-view="editor" className="h-full">
+                <WorkspaceWelcome
+                  active={welcome && view === "code"}
+                  title={tab.title}
+                  hasContent={!!tab.content.trim()}
+                  busy={busy}
+                  onFocus={() => editor.current?.focus()}
+                  onSample={() => {
+                    if (editor.current) editor.current.updateValue(JsonSample);
+                    else update(JsonSample);
+                    setWelcome(false);
+                  }}
+                  onStart={() => {
+                    setWelcome(false);
+                    editor.current?.focus();
+                  }}
+                  onContinue={() => {
+                    setWelcome(false);
+                    editor.current?.focus();
+                  }}
+                >
+                  <MonacoDataEditor
+                    ref={editor}
+                    tabKey={tab.key}
+                    tabTitle={tab.title}
+                    documentId={tab.key}
+                    language={tab.editorSettings.language}
+                    languageMode={tab.editorSettings.languageMode}
+                    filename={tab.editorSettings.filename}
+                    theme={theme}
+                    height="100%"
+                    isMenu
+                    zoomView="editor"
+                    settingsBarTarget={settingsTarget}
+                    showJsonPathFilter={!welcome || view !== "code"}
+                    statusBarTarget={statusTarget}
+                    languageBarTarget={languageTarget}
+                    indentationBarTarget={indentationTarget}
+                    onUpdateValue={update}
+                  />
+                </WorkspaceWelcome>
+              </div>
               {splitView && (
                 // 右侧懒加载单独挂 Suspense，避免首次打开时把左侧编辑器一起替换成加载态
-                <Suspense fallback={<Loading />}>
-                  {view === "tree" ? (
-                    <TreeEditor
-                      tabKey={tab.key}
-                      content={treeContent}
-                      onUpdateValue={(value) =>
-                        update(
-                          "text" in value
-                            ? value.text
-                            : stringifyJson(
-                                value.json,
-                                tab.editorSettings.indentSize,
-                              ),
-                        )
-                      }
-                    />
-                  ) : (
-                    <TableView
-                      ref={table}
-                      data={tab.content}
-                      onDataUpdate={update}
-                      onCopy={tableCopy}
-                    />
-                  )}
-                </Suspense>
+                <div data-zoom-view={view} className="h-full">
+                  <Suspense fallback={<Loading />}>
+                    {view === "tree" ? (
+                      <TreeEditor
+                        tabKey={tab.key}
+                        zoomView="tree"
+                        content={treeContent}
+                        onUpdateValue={(value) =>
+                          update(
+                            "text" in value
+                              ? value.text
+                              : stringifyJson(
+                                  value.json,
+                                  tab.editorSettings.indentSize,
+                                ),
+                          )
+                        }
+                      />
+                    ) : (
+                      <TableView
+                        ref={table}
+                        data={tab.content}
+                        onDataUpdate={update}
+                        onCopy={tableCopy}
+                      />
+                    )}
+                  </Suspense>
+                </div>
               )}
             </ResizableEditorLayout>
           )}
           {view === "graph" && (
-            <GraphView
-              data={tab.content}
-              onEdit={() => store.setView(tab.key, "code")}
-            />
+            <div data-zoom-view="graph" className="h-full">
+              <GraphView
+                data={tab.content}
+                onEdit={() => store.setView(tab.key, "code")}
+              />
+            </div>
           )}
           {view === "diff" && (
-            <MonacoDiffEditor
-              ref={diff}
-              settingsBarTarget={settingsTarget}
-              languageBarTarget={languageTarget}
-              indentationBarTarget={indentationTarget}
-              tabKey={tab.key}
-              tabTitle={tab.title}
-              originalValue={tab.content}
-              modifiedValue={tab.diffModifiedValue || ""}
-              language={tab.editorSettings.language}
-              languageMode={tab.editorSettings.languageMode}
-              filename={tab.editorSettings.filename}
-              theme={theme}
-              onUpdateOriginalValue={update}
-              onUpdateModifiedValue={(text) =>
-                store.setTabModifiedValue(tab.key, text)
-              }
-            />
+            <div data-zoom-view="diff" className="h-full">
+              <MonacoDiffEditor
+                ref={diff}
+                zoomView="diff"
+                settingsBarTarget={settingsTarget}
+                languageBarTarget={languageTarget}
+                indentationBarTarget={indentationTarget}
+                tabKey={tab.key}
+                tabTitle={tab.title}
+                originalValue={tab.content}
+                modifiedValue={tab.diffModifiedValue || ""}
+                language={tab.editorSettings.language}
+                languageMode={tab.editorSettings.languageMode}
+                filename={tab.editorSettings.filename}
+                theme={theme}
+                onUpdateOriginalValue={update}
+                onUpdateModifiedValue={(text) =>
+                  store.setTabModifiedValue(tab.key, text)
+                }
+              />
+            </div>
           )}
         </Suspense>
       </div>
@@ -693,6 +715,7 @@ function DocumentWorkspace({ tabKey }: { tabKey: string }) {
           </button>
         </div>
         <div className="status-details">
+          <ViewZoomControl views={zoomViews} />
           <span ref={setStatusTarget} className="status-cursor" />
           <span
             className="status-character-count"
