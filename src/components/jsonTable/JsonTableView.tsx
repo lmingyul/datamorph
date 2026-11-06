@@ -10,18 +10,16 @@ import React, {
   useMemo,
 } from "react";
 import { Icon } from "@/components/ui/icon";
-import { Button } from "@/components/ui";
+import { Button, Input } from "@/components/ui";
 import { isLosslessNumber } from "lossless-json";
 
-import JsonTableOperationBar, {
-  JsonTableOperationBarRef,
-} from "@/components/jsonTable/JsonTableOperationBar.tsx";
+import JsonTableOperationBar from "@/components/jsonTable/JsonTableOperationBar.tsx";
 import JsonTable from "@/components/jsonTable/JsonTable.tsx";
 import toast from "@/utils/toast";
 import clipboard from "@/utils/clipboard";
 import { useTabStore } from "@/store/useTabStore";
 import { useToolState } from "@/components/workspace/ToolContext";
-import { parseJson } from "@/utils/json";
+import { parseJson, stringifyJson } from "@/utils/json";
 import {
   convertToCSV,
   convertToExcel,
@@ -53,7 +51,6 @@ const JsonTableView: React.FC<JsonTableViewProps> = ({
   ref,
 }) => {
   const documentKey = useTabStore((s) => s.activeTabKey);
-  const operationBarRef = useRef<JsonTableOperationBarRef>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useToolState<string[]>("table:expanded", []);
   const expandedPaths = useMemo(() => new Set(expanded), [expanded]);
@@ -327,8 +324,6 @@ const JsonTableView: React.FC<JsonTableViewProps> = ({
           expandedPaths={expandedPaths}
           hideEmpty={hideEmpty}
           hideNull={hideNull}
-          onCollapseAll={handleCollapseAll}
-          onExpandAll={handleExpandAll}
           onToggleExpand={handleToggleExpand}
         />,
       );
@@ -567,6 +562,18 @@ const JsonTableView: React.FC<JsonTableViewProps> = ({
     setGlobalFilter(value);
   }, []);
 
+  // 单元格编辑：按文档缩进重新序列化，回写后文本视图同步刷新
+  const handleEdit = useCallback(
+    (next: any) => {
+      const indent =
+        useTabStore.getState().getTabByKey(documentKey)?.editorSettings
+          .indentSize || 2;
+      setJsonData(next);
+      onDataUpdate?.(stringifyJson(next, indent));
+    },
+    [documentKey, onDataUpdate],
+  );
+
   const currentContent = React.useMemo(() => {
     if (isSwitchingEditor) {
       if (previousRenderedView) {
@@ -578,8 +585,6 @@ const JsonTableView: React.FC<JsonTableViewProps> = ({
             expandedPaths={expandedPaths}
             hideEmpty={hideEmpty}
             hideNull={hideNull}
-            onCollapseAll={handleCollapseAll}
-            onExpandAll={handleExpandAll}
             onPathChange={handlePathSelection}
             onToggleExpand={handleToggleExpand}
           />
@@ -615,9 +620,8 @@ const JsonTableView: React.FC<JsonTableViewProps> = ({
         globalFilter={isFilterActive ? globalFilter : undefined}
         hideEmpty={hideEmpty}
         hideNull={hideNull}
-        onCollapseAll={handleCollapseAll}
         onColumnFilterChange={handleColumnFilterChange}
-        onExpandAll={handleExpandAll}
+        onEdit={onDataUpdate ? handleEdit : undefined}
         onPathChange={handlePathSelection}
         onToggleExpand={handleToggleExpand}
       />
@@ -801,22 +805,42 @@ const JsonTableView: React.FC<JsonTableViewProps> = ({
           </Button>
         </div>
       )}
-      <JsonTableOperationBar
-        ref={operationBarRef}
-        globalFilterValue={globalFilter}
-        isFilterActive={isFilterActive}
-        tableMode={tableMode}
-        onClear={handleClear}
-        onCollapse={handleCollapseAll}
-        onCopy={onCopy}
-        onCustomView={handleCustomView}
-        onExpand={handleExpandAll}
-        onExport={handleExport}
-        onFilterToggle={handleFilterToggle}
-        onGlobalFilterChange={handleGlobalFilterChange}
-      />
-      <div className="flex-grow overflow-hidden border border-border bg-white dark:bg-vscode-dark">
-        {currentContent}
+      <div className="flex min-h-0 flex-grow">
+        <div className="flex min-w-0 flex-grow flex-col overflow-hidden bg-white dark:bg-vscode-dark">
+          {/* 对象数组用列头筛选，其余表格用全局搜索框 */}
+          {isFilterActive &&
+            tableMode !== "objectsArray" &&
+            tableMode !== "primitive" && (
+              <div className="shrink-0 border-b border-border bg-muted px-2 py-1">
+                <Input
+                  isClearable
+                  className="w-full max-w-64"
+                  placeholder="搜索表格内容..."
+                  size="sm"
+                  startContent={
+                    <Icon
+                      className="text-muted-foreground"
+                      icon="mdi:magnify"
+                      width={16}
+                    />
+                  }
+                  value={globalFilter}
+                  onValueChange={handleGlobalFilterChange}
+                />
+              </div>
+            )}
+          <div className="min-h-0 flex-grow">{currentContent}</div>
+        </div>
+        <JsonTableOperationBar
+          isFilterActive={isFilterActive}
+          onClear={handleClear}
+          onCollapse={handleCollapseAll}
+          onCopy={onCopy}
+          onCustomView={handleCustomView}
+          onExpand={handleExpandAll}
+          onExport={handleExport}
+          onFilterToggle={handleFilterToggle}
+        />
       </div>
     </div>
   );

@@ -1,26 +1,28 @@
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useMemo,
-  useCallback,
-} from "react";
+import { useState } from "react";
+import {
+  Check,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Copy,
+  Eye,
+  FileSpreadsheet,
+  FileText,
+  Filter,
+  Trash2,
+  X,
+  type LucideIcon,
+} from "lucide-react";
+
 import {
   Button,
-  ButtonGroup,
   cn,
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
-  Input,
   Tooltip,
 } from "@/components/ui";
-import { Icon } from "@/components/ui/icon";
-
-import StatusButton, { IconStatus } from "@/components/button/StatusButton.tsx";
 import toast from "@/utils/toast";
-import { stringifyJson } from "@/utils/json";
 
 interface JsonTableOperationBarProps {
   onCopy: (type?: "default" | "node" | "path") => boolean;
@@ -31,55 +33,47 @@ interface JsonTableOperationBarProps {
   onExport?: (format: "csv" | "xlsx") => void;
   onFilterToggle?: () => void;
   isFilterActive?: boolean;
-  globalFilterValue?: string;
-  onGlobalFilterChange?: (value: string) => void;
-  /** 表格类型，决定全局搜索框是否显示 */
-  tableMode?: "objectsArray" | "object" | "array" | "primitive";
-  ref?: React.Ref<JsonTableOperationBarRef>;
 }
 
-export interface JsonTableOperationBarRef {}
+const VIEW_OPTIONS = [
+  { key: "hideEmpty", text: "隐藏空值" },
+  { key: "hideNull", text: "隐藏 null 值" },
+  { key: "showAll", text: "显示所有值" },
+] as const;
 
-// 定义按钮接口
-interface BaseButtonConfig {
-  key: string;
-  icon: string;
-  text: string;
-  tooltip: string;
-  onClick: () => void;
-  iconColor?: string;
-  className?: string;
-  priority?: number; // 按钮显示优先级，数字越小优先级越高
-  width?: number; // 按钮的预估宽度，用于自适应计算
+function ToolButton({
+  icon: IconComponent,
+  label,
+  active,
+  onPress,
+}: {
+  icon: LucideIcon;
+  label: string;
+  active?: boolean;
+  onPress?: () => void;
+}) {
+  return (
+    <Tooltip content={label} placement="left">
+      <Button
+        isIconOnly
+        aria-label={label}
+        className={cn(
+          "size-7 min-w-0 rounded-md text-muted-foreground hover:bg-accent hover:text-primary active:scale-95",
+          active && "bg-accent text-primary",
+        )}
+        variant="light"
+        onPress={onPress}
+      >
+        <IconComponent className="size-[17px]" />
+      </Button>
+    </Tooltip>
+  );
 }
 
-interface StatusButtonConfig extends BaseButtonConfig {
-  isStatusButton: true;
-  status: IconStatus;
-  successText?: string;
-}
+const Separator = () => <div className="my-1 h-px w-[18px] bg-border" />;
 
-interface DropdownButtonConfig extends BaseButtonConfig {
-  hasDropdown: true;
-  dropdownItems: {
-    key: string;
-    icon: string;
-    text: string;
-    onClick: () => void;
-  }[];
-}
-
-type ButtonConfig =
-  | BaseButtonConfig
-  | StatusButtonConfig
-  | DropdownButtonConfig;
-
-interface ButtonGroup {
-  key: string;
-  buttons: ButtonConfig[];
-}
-
-const JsonTableOperationBar: React.FC<JsonTableOperationBarProps> = ({
+/** 表格视图右侧的竖排工具条，布局与树形视图一致 */
+export default function JsonTableOperationBar({
   onCopy,
   onExpand,
   onCollapse,
@@ -88,571 +82,88 @@ const JsonTableOperationBar: React.FC<JsonTableOperationBarProps> = ({
   onExport,
   onFilterToggle,
   isFilterActive = false,
-  globalFilterValue = "",
-  onGlobalFilterChange,
-  tableMode = "object",
-}) => {
-  const [isViewDropdownOpen, setViewDropdownOpen] = useState(false);
-  const [copyStatus, setCopyStatus] = useState<IconStatus>(IconStatus.Default);
-  const [clearStatus, setClearStatus] = useState<IconStatus>(
-    IconStatus.Default,
-  );
+}: JsonTableOperationBarProps) {
+  const [flash, setFlash] = useState<"copy" | "clear" | null>(null);
+  const [copyFailed, setCopyFailed] = useState(false);
 
-  // 容器参考和宽度状态
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [visibleButtons, setVisibleButtons] = useState<string[]>([]);
-  const [hiddenButtons, setHiddenButtons] = useState<ButtonConfig[]>([]);
-
-  // 新增：使用ref来保存当前的visibleButtons和hiddenButtons状态，避免依赖循环
-  const visibleButtonsRef = useRef<string[]>([]);
-  const hiddenButtonsRef = useRef<ButtonConfig[]>([]);
-
-  // 每次visibleButtons或hiddenButtons更新时，同步到ref
-  useEffect(() => {
-    visibleButtonsRef.current = visibleButtons;
-    hiddenButtonsRef.current = hiddenButtons;
-  }, [visibleButtons, hiddenButtons]);
-
-  // 防止下拉菜单打开时，鼠标移开后立即关闭
-  var viewDropdownOpenTimeoutRef: NodeJS.Timeout;
-  var moreDropdownOpenTimeoutRef: NodeJS.Timeout;
-
-  const dropdownTimeout = 300;
-
-  // 视图选项下拉菜单
-  const showViewDropdown = () => {
-    if (viewDropdownOpenTimeoutRef) {
-      clearTimeout(viewDropdownOpenTimeoutRef);
-    }
-    setViewDropdownOpen(true);
+  const feedback = (key: "copy" | "clear", ok: boolean) => {
+    setCopyFailed(!ok);
+    setFlash(key);
+    setTimeout(() => setFlash(null), 1000);
   };
-  const unShowViewDropdown = () => {
-    if (viewDropdownOpenTimeoutRef) {
-      clearTimeout(viewDropdownOpenTimeoutRef);
-    }
-    viewDropdownOpenTimeoutRef = setTimeout(() => {
-      setViewDropdownOpen(false);
-    }, dropdownTimeout);
-  };
+  const statusIcon = (key: "copy" | "clear", icon: LucideIcon) =>
+    flash === key ? (copyFailed ? X : Check) : icon;
 
-  // 更多下拉菜单
-  const [isMoreDropdownOpen, setMoreDropdownOpen] = useState(false);
-  const showMoreDropdown = () => {
-    if (moreDropdownOpenTimeoutRef) {
-      clearTimeout(moreDropdownOpenTimeoutRef);
-    }
-    setMoreDropdownOpen(true);
-  };
-  const unShowMoreDropdown = () => {
-    if (moreDropdownOpenTimeoutRef) {
-      clearTimeout(moreDropdownOpenTimeoutRef);
-    }
-    moreDropdownOpenTimeoutRef = setTimeout(() => {
-      setMoreDropdownOpen(false);
-    }, dropdownTimeout);
-  };
-
-  // 使用useMemo记忆按钮组配置，防止每次渲染时重新创建
-  const actionGroups = useMemo(() => {
-    const groups: ButtonGroup[] = [
-      {
-        key: "copy",
-        buttons: [
-          {
-            key: "copy",
-            isStatusButton: true,
-            icon: "si:copy-line",
-            text: "复制",
-            tooltip: "复制内容到剪贴板",
-            status: copyStatus,
-            successText: "已复制",
-            priority: 10,
-            width: 90,
-            onClick: () => {
-              setTimeout(() => {
-                setCopyStatus(IconStatus.Default);
-              }, 1000);
-              setCopyStatus(onCopy() ? IconStatus.Success : IconStatus.Error);
-            },
-          },
-        ],
-      },
-      {
-        key: "view",
-        buttons: [
-          {
-            key: "view",
-            icon: "solar:eye-outline",
-            text: "视图",
-            tooltip: "设置视图选项",
-            hasDropdown: true,
-            priority: 20,
-            width: 90,
-            onClick: showViewDropdown,
-            dropdownItems: [
-              {
-                key: "hideEmpty",
-                icon: "solar:eye-closed-outline",
-                text: "隐藏空值",
-                onClick: () => {
-                  onCustomView("hideEmpty");
-                  toast.success("已隐藏空值");
-                  setViewDropdownOpen(false);
-                },
-              },
-              {
-                key: "hideNull",
-                icon: "solar:eye-closed-outline",
-                text: "隐藏null值",
-                onClick: () => {
-                  onCustomView("hideNull");
-                  toast.success("已隐藏null值");
-                  setViewDropdownOpen(false);
-                },
-              },
-              {
-                key: "showAll",
-                icon: "solar:eye-outline",
-                text: "显示所有值",
-                onClick: () => {
-                  onCustomView("showAll");
-                  toast.success("显示所有值");
-                  setViewDropdownOpen(false);
-                },
-              },
-            ],
-          },
-        ],
-      },
-    ];
-
-    groups.push({
-      key: "expand",
-      buttons: [
-        {
-          key: "expand",
-          icon: "tabler:fold-down",
-          text: "展开",
-          tooltip: "展开所有节点",
-          priority: 20,
-          width: 90,
-          onClick: onExpand,
-        },
-        {
-          key: "collapse",
-          icon: "tabler:fold-up",
-          text: "折叠",
-          tooltip: "折叠所有节点",
-          priority: 30,
-          width: 90,
-          onClick: onCollapse,
-        },
-      ],
-    });
-
-    // 添加清空按钮（如果提供了）
-    if (onClear) {
-      groups.push({
-        key: "clear",
-        buttons: [
-          {
-            key: "clear",
-            isStatusButton: true,
-            icon: "mynaui:trash",
-            text: "清空",
-            tooltip: "清空内容",
-            status: clearStatus,
-            successText: "已清空",
-            priority: 40,
-            width: 90,
-            onClick: () => {
-              setTimeout(() => {
-                setClearStatus(IconStatus.Default);
-              }, 1000);
-              setClearStatus(onClear() ? IconStatus.Success : IconStatus.Error);
-            },
-          },
-        ],
-      });
-    }
-
-    // 筛选按钮（放在清空按钮之后）
-    if (onFilterToggle) {
-      groups.push({
-        key: "filter",
-        buttons: [
-          {
-            key: "filter",
-            icon: isFilterActive ? "mdi:filter" : "mdi:filter-outline",
-            text: "搜索",
-            tooltip: isFilterActive ? "关闭搜索" : "开启搜索",
-            iconColor: isFilterActive ? "text-primary" : undefined,
-            priority: 50,
-            width: 90,
-            onClick: onFilterToggle,
-          },
-        ],
-      });
-    }
-
-    if (onExport) {
-      groups.push({
-        key: "export",
-        buttons: (["csv", "xlsx"] as const).map((format) => ({
-          key: `export-${format}`,
-          icon: "solar:download-linear",
-          text: format === "csv" ? "导出 CSV" : "导出 Excel",
-          tooltip: "导出选中节点，未选择时导出全部数据",
-          priority: 60,
-          width: 110,
-          onClick: () => onExport(format),
-        })),
-      });
-    }
-
-    return groups;
-  }, [
-    copyStatus,
-    clearStatus,
-    onCopy,
-    onExpand,
-    onCollapse,
-    onCustomView,
-    onClear,
-    onExport,
-    onFilterToggle,
-    isFilterActive,
-    showViewDropdown,
-  ]);
-
-  // 更多按钮本身的宽度
-  const MORE_BUTTON_WIDTH = 90;
-  // 分隔线宽度
-  const SEPARATOR_WIDTH = 25;
-  // 最小左右间距
-  const MIN_PADDING = 16;
-
-  // 使用useCallback记忆calculateVisibleButtons函数，并移除对visibleButtons和hiddenButtons的依赖
-  const calculateVisibleButtons = useCallback(() => {
-    if (!containerRef.current) return;
-
-    const width = containerRef.current.clientWidth;
-
-    // 提取所有按钮
-    const allButtons = actionGroups.flatMap((group) => group.buttons);
-    // 按优先级排序按钮
-    const sortedButtons = [...allButtons].sort(
-      (a, b) => (a.priority || 999) - (b.priority || 999),
-    );
-
-    // 计算可用宽度 (考虑左右边距和分隔线)
-    let availableWidth =
-      width - 2 * MIN_PADDING - (actionGroups.length - 1) * SEPARATOR_WIDTH;
-    const visible: string[] = [];
-    const hidden: ButtonConfig[] = [];
-
-    // 第一次遍历，检查是否所有按钮都能显示
-    let totalButtonsWidth = 0;
-
-    for (const button of sortedButtons) {
-      totalButtonsWidth += button.width || 100; // 默认宽度100
-    }
-
-    // 如果所有按钮的总宽度超过可用宽度，则需要"更多"按钮
-    if (totalButtonsWidth > availableWidth) {
-      availableWidth -= MORE_BUTTON_WIDTH;
-    }
-
-    // 第二次遍历，决定哪些按钮可见
-    let usedWidth = 0;
-
-    for (const button of sortedButtons) {
-      const buttonWidth = button.width || 100; // 默认宽度100
-
-      if (usedWidth + buttonWidth <= availableWidth) {
-        visible.push(button.key);
-        usedWidth += buttonWidth;
-      } else {
-        hidden.push(button);
-      }
-    }
-
-    // 只有在数据真正发生变化时才更新状态 - 使用ref替代直接依赖
-    const visibleKeysString = stringifyJson(visible.sort());
-    const currentKeysString = stringifyJson(
-      [...visibleButtonsRef.current].sort(),
-    );
-
-    if (
-      visibleKeysString !== currentKeysString ||
-      hiddenButtonsRef.current.length !== hidden.length
-    ) {
-      setVisibleButtons(visible);
-      setHiddenButtons(hidden);
-    }
-  }, [actionGroups]);
-
-  // 监听容器宽度变化，并计算哪些按钮可见
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    // 初始计算
-    calculateVisibleButtons();
-
-    // 创建ResizeObserver来监听容器大小变化
-    const resizeObserver = new ResizeObserver(() => {
-      // 使用RAF来减少频繁更新
-      requestAnimationFrame(calculateVisibleButtons);
-    });
-
-    resizeObserver.observe(containerRef.current);
-
-    // 同时监听窗口大小变化作为后备
-    const handleResize = () => {
-      requestAnimationFrame(calculateVisibleButtons);
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      if (containerRef.current) {
-        resizeObserver.unobserve(containerRef.current);
-      }
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [calculateVisibleButtons]);
-
-  // 渲染按钮
-  const renderButton = (button: ButtonConfig) => {
-    // 检查按钮是否应该可见
-    if (!visibleButtons.includes(button.key)) return null;
-
-    // 状态按钮
-    if ("isStatusButton" in button && button.isStatusButton) {
-      return (
-        <StatusButton
-          key={button.key}
-          icon={button.icon}
-          status={button.status}
-          successText={button.successText}
-          text={button.text}
-          onClick={button.onClick}
+  return (
+    <div className="flex w-10 shrink-0 flex-col items-center gap-0.5 overflow-y-auto border-l border-border bg-muted py-1.5">
+      <ToolButton icon={ChevronsUpDown} label="展开全部" onPress={onExpand} />
+      <ToolButton icon={ChevronsDownUp} label="折叠全部" onPress={onCollapse} />
+      <Separator />
+      {onFilterToggle && (
+        <ToolButton
+          active={isFilterActive}
+          icon={Filter}
+          label={isFilterActive ? "关闭搜索筛选" : "搜索筛选"}
+          onPress={onFilterToggle}
         />
-      );
-    }
-
-    // 带下拉菜单的按钮
-    if ("hasDropdown" in button && button.hasDropdown) {
-      const isDropdownOpen = button.key === "view" ? isViewDropdownOpen : false;
-      const setDropdownOpen =
-        button.key === "view" ? setViewDropdownOpen : undefined;
-
-      const showDropdown = button.key === "view" ? showViewDropdown : undefined;
-      const unShowDropdown =
-        button.key === "view" ? unShowViewDropdown : undefined;
-
-      return (
-        <Dropdown
-          key={button.key}
-          classNames={{
-            base: "before:bg-border",
-            content: "min-w-[140px] p-1",
-          }}
-          isOpen={isDropdownOpen}
-          radius="sm"
-          onOpenChange={setDropdownOpen}
-        >
-          <Tooltip content={button.tooltip} delay={300}>
-            <DropdownTrigger
-              onMouseEnter={showDropdown}
-              onMouseLeave={unShowDropdown}
-            >
-              <Button
-                className={cn(
-                  "pl-2 pr-2 h-8 gap-1 text-muted-foreground transition-colors",
-                  button.className,
-                  "hover:bg-border/50",
-                )}
-                size="sm"
-                startContent={
-                  <Icon
-                    className={button.iconColor || ""}
-                    icon={button.icon}
-                    width={18}
-                  />
-                }
-                variant="light"
-              >
-                {button.text}
-              </Button>
-            </DropdownTrigger>
-          </Tooltip>
-          <DropdownMenu
-            aria-label={`${button.text} options`}
-            onMouseEnter={showDropdown}
-            onMouseLeave={unShowDropdown}
-          >
-            {button.dropdownItems.map((item) => (
-              <DropdownItem
-                key={item.key}
-                className="py-2 px-3 hover:bg-secondary rounded-md"
-                textValue={item.text}
-                onPress={item.onClick}
-              >
-                <div className="flex items-center space-x-2">
-                  <Icon icon={item.icon} width={16} />
-                  <span>{item.text}</span>
-                </div>
-              </DropdownItem>
-            ))}
-          </DropdownMenu>
-        </Dropdown>
-      );
-    }
-
-    // 普通按钮
-    return (
-      <Tooltip key={button.key} content={button.tooltip} delay={300}>
-        <Button
-          className={cn(
-            "pl-2 pr-2 h-8 gap-1 text-muted-foreground transition-colors",
-            button.className,
-            "hover:bg-border/50",
-          )}
-          size="sm"
-          startContent={
-            <Icon
-              className={button.iconColor || ""}
-              icon={button.icon}
-              width={18}
-            />
-          }
-          variant="light"
-          onPress={button.onClick}
-        >
-          {button.text}
-        </Button>
-      </Tooltip>
-    );
-  };
-
-  // 更多菜单渲染
-  const renderMoreMenu = () => {
-    // 如果没有隐藏的按钮，不显示更多菜单
-    if (hiddenButtons.length === 0) return null;
-
-    return (
-      <Dropdown
-        classNames={{
-          base: "before:bg-border",
-          content: "min-w-[140px] p-1",
-        }}
-        isOpen={isMoreDropdownOpen}
-        radius="sm"
-        onOpenChange={setMoreDropdownOpen}
-      >
-        <Tooltip content="更多操作" delay={300}>
-          <DropdownTrigger
-            onMouseEnter={showMoreDropdown}
-            onMouseLeave={unShowMoreDropdown}
-          >
+      )}
+      <Dropdown>
+        <Tooltip content="视图选项" placement="left">
+          <DropdownTrigger>
             <Button
-              className="pl-2 pr-2 h-8 gap-1 text-muted-foreground !min-w-16 hover:bg-border/50 transition-colors"
-              startContent={<Icon icon="mingcute:more-2-fill" width={20} />}
+              isIconOnly
+              aria-label="视图选项"
+              className="size-7 min-w-0 rounded-md text-muted-foreground hover:bg-accent hover:text-primary active:scale-95"
               variant="light"
             >
-              更多
+              <Eye className="size-[17px]" />
             </Button>
           </DropdownTrigger>
         </Tooltip>
-        <DropdownMenu
-          aria-label="更多操作"
-          onMouseEnter={showMoreDropdown}
-          onMouseLeave={unShowMoreDropdown}
-        >
-          {actionGroups
-            .flatMap((group) => group.buttons)
-            .filter((item) =>
-              hiddenButtons.some((hidden) => hidden.key === item.key),
-            )
-            .map((item) => (
-              <DropdownItem
-                key={item.key}
-                className="py-2 px-3 hover:bg-secondary rounded-md"
-                textValue={item.text}
-                onPress={() => {
-                  setMoreDropdownOpen(false);
-                  item.onClick();
-                }}
-              >
-                <div className="flex items-center space-x-2">
-                  <Icon
-                    icon={"isStatusButton" in item ? item.icon : item.icon}
-                    width={16}
-                  />
-                  <span>{"text" in item ? item.text : ""}</span>
-                </div>
-              </DropdownItem>
-            ))}
+        <DropdownMenu aria-label="视图选项">
+          {VIEW_OPTIONS.map((option) => (
+            <DropdownItem
+              key={option.key}
+              onPress={() => {
+                onCustomView(option.key);
+                toast.success(option.text);
+              }}
+            >
+              {option.text}
+            </DropdownItem>
+          ))}
         </DropdownMenu>
       </Dropdown>
-    );
-  };
-
-  // 动态渲染按钮组
-  const renderActionGroups = () => {
-    return actionGroups.map((group, groupIndex) => {
-      const hasVisibleButtons = group.buttons.some((button) =>
-        visibleButtons.includes(button.key),
-      );
-
-      return (
-        <React.Fragment key={group.key}>
-          {/* 分隔线 */}
-          {groupIndex > 0 && hasVisibleButtons && (
-            <div className="h-6 w-px bg-border mx-1" />
-          )}
-          <div className="flex items-center gap-2">
-            {group.buttons.map(renderButton)}
-          </div>
-        </React.Fragment>
-      );
-    });
-  };
-
-  return (
-    <div
-      ref={containerRef}
-      className="h-10 flex items-center gap-1 px-1 bg-secondary shadow-sm"
-    >
-      {renderActionGroups()}
-
-      {/* 筛选激活时的全局搜索输入框（仅用于非对象数组表格） */}
-      {isFilterActive &&
-        tableMode !== "objectsArray" &&
-        tableMode !== "primitive" &&
-        onGlobalFilterChange && (
-          <Input
-            isClearable
-            className="w-40 ml-1"
-            placeholder="搜索表格内容..."
-            size="sm"
-            startContent={
-              <Icon
-                className="text-muted-foreground"
-                icon="mdi:magnify"
-                width={16}
-              />
-            }
-            value={globalFilterValue}
-            onValueChange={onGlobalFilterChange}
+      <Separator />
+      <ToolButton
+        icon={statusIcon("copy", Copy)}
+        label="复制内容"
+        onPress={() => feedback("copy", onCopy())}
+      />
+      {onExport && (
+        <>
+          <ToolButton
+            icon={FileText}
+            label="导出 CSV（选中节点，未选时导出全部）"
+            onPress={() => onExport("csv")}
           />
-        )}
-
-      {/* 更多菜单 */}
-      {renderMoreMenu()}
+          <ToolButton
+            icon={FileSpreadsheet}
+            label="导出 Excel（选中节点，未选时导出全部）"
+            onPress={() => onExport("xlsx")}
+          />
+        </>
+      )}
+      {onClear && (
+        <>
+          <Separator />
+          <ToolButton
+            icon={statusIcon("clear", Trash2)}
+            label="清空内容"
+            onPress={() => feedback("clear", onClear())}
+          />
+        </>
+      )}
     </div>
   );
-};
-
-export default JsonTableOperationBar;
+}

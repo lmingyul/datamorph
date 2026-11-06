@@ -3,12 +3,15 @@ import { VirtualRows } from "@/components/ui/virtual-rows";
 import React, {
   useState,
   useEffect,
+  useLayoutEffect,
   useRef,
   useCallback,
   useMemo,
 } from "react";
 import { Icon } from "@/components/ui/icon";
 import { isLosslessNumber } from "lossless-json";
+import { parseJson } from "@/utils/json";
+import toast from "@/utils/toast";
 
 import JsonPathBar from "@/components/jsonTable/JsonPathBar.tsx";
 import ColumnFilterPopover from "@/components/jsonTable/ColumnFilterPopover.tsx";
@@ -33,10 +36,10 @@ const ANIMATION_DURATION = 200; // 300ms
 interface JsonTableProps {
   data: any;
   onPathChange?: (path: string) => void;
+  /** 单元格编辑后的新根值；不传则表格只读 */
+  onEdit?: (next: any) => void;
   expandedPaths: Set<string>;
   onToggleExpand: (path: string) => void;
-  onExpandAll: () => void;
-  onCollapseAll: () => void;
   hideEmpty?: boolean;
   hideNull?: boolean;
   /** 列筛选条件：key -> 允许的值列表 */
@@ -66,13 +69,144 @@ function toDisplayString(value: any): string {
   return String(value);
 }
 
+type Segment = string | number;
+type EditKind = "key" | "value" | "column";
+interface EditTarget {
+  kind: EditKind;
+  /** value：值本身的位置；key / column：键所在对象 / 对象数组的位置 */
+  segments: Segment[];
+  key?: string;
+  initial: string;
+  original: unknown;
+  width: number;
+}
+type EditSpec = Omit<EditTarget, "initial" | "width"> & { id: string };
+
+function setIn(node: any, segments: Segment[], update: (v: any) => any): any {
+  if (segments.length === 0) return update(node);
+  const [head, ...rest] = segments;
+  if (Array.isArray(node)) {
+    const copy = node.slice();
+    copy[head as number] = setIn(node[head as number], rest, update);
+    return copy;
+  }
+  return { ...node, [head]: setIn(node?.[head], rest, update) };
+}
+
+const renameKey = (obj: Record<string, unknown>, from: string, to: string) =>
+  Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [k === from ? to : k, v]),
+  );
+
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" &&
+  v !== null &&
+  !Array.isArray(v) &&
+  !isLosslessNumber(v);
+
+/** 原值是字符串时保持字符串；其余类型按 JSON 解析，解析不了才当字符串 */
+function parseCellInput(text: string, original: unknown): unknown {
+  if (typeof original === "string") return text;
+  try {
+    return parseJson(text);
+  } catch {
+    return text;
+  }
+}
+
+/** 按编辑目标生成新的根值；键名冲突时抛错，由调用方提示 */
+function applyEdit(root: any, target: EditTarget, text: string): any {
+  if (target.kind === "value")
+    return setIn(root, target.segments, () =>
+      parseCellInput(text, target.original),
+    );
+  const from = target.key!;
+  if (!text) throw new Error("键名不能为空");
+  if (target.kind === "key")
+    return setIn(root, target.segments, (obj) => {
+      if (text in obj) throw new Error(`键名「${text}」已存在`);
+      return renameKey(obj, from, text);
+    });
+  return setIn(root, target.segments, (rows: unknown[]) => {
+    if (rows.some((row) => isPlainObject(row) && text in row))
+      throw new Error(`列名「${text}」已存在`);
+    return rows.map((row) =>
+      isPlainObject(row) && from in row ? renameKey(row, from, text) : row,
+    );
+  });
+}
+
+function CellEditor({
+  target,
+  onDraft,
+  onDone,
+}: {
+  target: EditTarget;
+  onDraft: (text: string) => void;
+  onDone: (text: string | null) => void;
+}) {
+  const [draft, setDraft] = useState(target.initial);
+  const finished = useRef(false);
+  const area = useRef<HTMLTextAreaElement>(null);
+  const finish = (text: string | null) => {
+    if (finished.current) return;
+    finished.current = true;
+    onDone(text);
+  };
+  useLayoutEffect(() => {
+    const el = area.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 240)}px`;
+  }, [draft]);
+  useEffect(() => {
+    area.current?.focus();
+    area.current?.select();
+  }, []);
+
+  return (
+    <textarea
+      ref={area}
+      aria-label={target.kind === "value" ? "编辑值" : "编辑键名"}
+      className="block resize-none rounded-sm bg-background px-1 font-[inherit] text-sm leading-6 text-foreground outline-none"
+      rows={1}
+      spellCheck={false}
+      style={{ width: target.width }}
+      value={draft}
+      onBlur={() => finish(draft)}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        onDraft(e.target.value);
+      }}
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        // 中文输入法选词时的回车不能当成提交
+        if (e.nativeEvent.isComposing) return;
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          finish(draft);
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          finish(null);
+        }
+      }}
+    />
+  );
+}
+
+const LIVE_SYNC_DELAY = 120;
+
+/** 悬浮或编辑中的单元格：主题色加粗边框 */
+const CELL_HIGHLIGHT =
+  "data-hover:outline-2 data-hover:-outline-offset-1 data-hover:outline-primary data-editing:outline-2 data-editing:-outline-offset-1 data-editing:outline-primary";
+
 const JsonTable: React.FC<JsonTableProps> = ({
   data,
   onPathChange,
+  onEdit,
   expandedPaths,
   onToggleExpand,
-  onExpandAll,
-  onCollapseAll,
   hideEmpty = false,
   hideNull = false,
   columnFilters,
@@ -88,6 +222,105 @@ const JsonTable: React.FC<JsonTableProps> = ({
     null,
   );
   const lastAutoExpandedDataRef = useRef<any>(null);
+  const [editing, setEditing] = useState<(EditTarget & { id: string }) | null>(
+    null,
+  );
+  const hovered = useRef<HTMLElement | null>(null);
+  const live = useRef<{ base: any; pushed: string; timer: number } | null>(
+    null,
+  );
+  useEffect(() => () => window.clearTimeout(live.current?.timer), []);
+
+  const beginEdit = (cell: HTMLElement, spec: EditSpec) => {
+    if (!onEdit || editing?.id === spec.id) return;
+    const initial =
+      spec.kind !== "value"
+        ? spec.key!
+        : spec.original === undefined
+          ? ""
+          : typeof spec.original === "string"
+            ? spec.original
+            : toDisplayString(spec.original);
+    // 编辑框沿用单元格原宽度，避免点进去时整列跳动
+    const width = Math.max(cell.getBoundingClientRect().width - 16, 96);
+    live.current = { base: data, pushed: initial, timer: 0 };
+    setEditing({ ...spec, initial, width });
+  };
+
+  // 值编辑边输入边同步到文本视图：始终基于开始编辑时的数据重放，短防抖避免大文档每键全量序列化。
+  // 键名/列名改动会让行重新挂载，仍在回车或失焦时一次性提交
+  const pushDraft = (text: string) => {
+    const session = live.current;
+    if (!session || !onEdit || editing?.kind !== "value") return;
+    const target = editing;
+    window.clearTimeout(session.timer);
+    session.timer = window.setTimeout(() => {
+      if (live.current !== session || session.pushed === text) return;
+      session.pushed = text;
+      onEdit(applyEdit(session.base, target, text));
+    }, LIVE_SYNC_DELAY);
+  };
+
+  const finishEdit = (text: string | null) => {
+    const target = editing;
+    const session = live.current;
+    live.current = null;
+    setEditing(null);
+    if (!target || !session || !onEdit) return;
+    window.clearTimeout(session.timer);
+    const changed = session.pushed !== target.initial;
+    if (text === null || text === target.initial) {
+      // 取消或改回原值：撤销已经同步出去的中间结果
+      if (changed) onEdit(session.base);
+      return;
+    }
+    if (text === session.pushed) return;
+    try {
+      onEdit(applyEdit(session.base, target, text));
+    } catch (error) {
+      if (changed) onEdit(session.base);
+      toast.error("修改失败", (error as Error).message);
+    }
+  };
+
+  const cellProps = (path: string, spec?: EditSpec) => ({
+    "data-cell": "",
+    "data-editing": spec && editing?.id === spec.id ? "" : undefined,
+    tabIndex: spec && onEdit ? 0 : undefined,
+    onClick: (e: React.MouseEvent<HTMLElement>) => {
+      handleElementClick(path, e);
+      // 列筛选按钮及其弹层（Portal 里的事件也会冒泡到这里）不触发编辑
+      const target = e.target as HTMLElement;
+      const onControl =
+        !e.currentTarget.contains(target) || !!target.closest("button");
+      if (spec && !onControl) beginEdit(e.currentTarget, spec);
+    },
+    onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+      if (spec && e.target === e.currentTarget && e.key === "Enter") {
+        e.preventDefault();
+        beginEdit(e.currentTarget, spec);
+      }
+    },
+  });
+
+  const cellEditor = (spec: EditSpec) =>
+    editing?.id === spec.id ? (
+      <CellEditor target={editing} onDone={finishEdit} onDraft={pushDraft} />
+    ) : null;
+
+  // 嵌套表格的单元格也在父单元格里，用事件委托只给最内层单元格标记悬浮。
+  // 键盘聚焦复用同一处理，Tab 到单元格时也有高亮
+  const handleMouseOver = (e: React.SyntheticEvent) => {
+    const cell = (e.target as HTMLElement).closest<HTMLElement>("[data-cell]");
+    if (cell === hovered.current) return;
+    hovered.current?.removeAttribute("data-hover");
+    cell?.setAttribute("data-hover", "");
+    hovered.current = cell;
+  };
+  const handleMouseLeave = () => {
+    hovered.current?.removeAttribute("data-hover");
+    hovered.current = null;
+  };
 
   // 新增：存储每个节点的内容可见性状态的Map
   const [visibleContents, setVisibleContents] = useState<Map<string, boolean>>(
@@ -291,20 +524,33 @@ const JsonTable: React.FC<JsonTableProps> = ({
   };
 
   // 根据数据类型渲染相应的嵌套表格
-  const renderNestedContent = (value: any, valuePath: string) => {
+  const renderNestedContent = (
+    value: any,
+    valuePath: string,
+    segments: Segment[],
+  ) => {
     // 如果不是数组，直接渲染对象表格
     if (!Array.isArray(value)) {
-      return renderObjectTable(value, valuePath);
+      return renderObjectTable(value, valuePath, segments);
     }
 
     // 如果是对象数组，渲染对象数组表格
     if (isObjectArray(value)) {
-      return renderObjectsArrayTable(value, valuePath, true);
+      return renderObjectsArrayTable(value, valuePath, true, segments);
     }
 
     // 否则渲染普通数组表格
-    return renderArrayTable(value, valuePath, true);
+    return renderArrayTable(value, valuePath, true, segments);
   };
+
+  const valueSpec = (
+    path: string,
+    segments: Segment[],
+    value: unknown,
+  ): EditSpec | undefined =>
+    isExpandable(value)
+      ? undefined
+      : { id: `value:${path}`, kind: "value", segments, original: value };
 
   // 渲染单元格内容
   const renderCell = (value: any, path: string) => {
@@ -353,19 +599,9 @@ const JsonTable: React.FC<JsonTableProps> = ({
       );
     }
 
-    // 为非可展开的元素添加点击处理器
+    // 点击由外层单元格统一处理（选中 + 进入编辑）
     return (
-      <span
-        className="cursor-pointer"
-        role="button"
-        tabIndex={0}
-        onClick={(e) => handleElementClick(path, e)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            handleElementClick(path, e);
-          }
-        }}
-      >
+      <span>
         {isLosslessNumber(value) ? (
           <span className="text-blue-600">{value.toString()}</span>
         ) : typeof value === "string" ? (
@@ -426,7 +662,11 @@ const JsonTable: React.FC<JsonTableProps> = ({
   }, [expandedPaths]);
 
   // 渲染对象表格
-  const renderObjectTable = (data: object, path: string = "root") => {
+  const renderObjectTable = (
+    data: object,
+    path: string,
+    segments: Segment[],
+  ) => {
     let entries = Object.entries(data);
 
     // 全局搜索过滤
@@ -454,6 +694,15 @@ const JsonTable: React.FC<JsonTableProps> = ({
               const isExpanded =
                 isExpandable(value) && expandedPaths.has(valuePath);
               const shouldRenderContent = visibleContents.has(valuePath);
+              const valueSegments = [...segments, key];
+              const keyEdit: EditSpec = {
+                id: `key:${valuePath}`,
+                kind: "key",
+                segments,
+                key,
+                original: key,
+              };
+              const valueEdit = valueSpec(valuePath, valueSegments, value);
 
               return (
                 <tr
@@ -461,17 +710,18 @@ const JsonTable: React.FC<JsonTableProps> = ({
                   className={`${isSelected ? "!bg-border/60" : ""} hover:bg-muted`}
                 >
                   <td
-                    className="px-2 text-sm font-medium border border-input cursor-pointer"
-                    onClick={(e) => handleElementClick(valuePath, e)}
+                    className={`px-2 text-sm font-medium border border-input cursor-text ${CELL_HIGHLIGHT}`}
+                    {...cellProps(valuePath, keyEdit)}
                   >
-                    {key}
+                    {cellEditor(keyEdit) ?? key}
                   </td>
                   <td
-                    className="px-2 text-sm border border-input cursor-pointer"
+                    className={`px-2 text-sm border border-input ${valueEdit ? "cursor-text" : "cursor-pointer"} ${CELL_HIGHLIGHT}`}
                     style={{ minWidth: "30px" }}
-                    onClick={(e) => handleElementClick(valuePath, e)}
+                    {...cellProps(valuePath, valueEdit)}
                   >
-                    {renderCell(value, valuePath)}
+                    {(valueEdit && cellEditor(valueEdit)) ??
+                      renderCell(value, valuePath)}
                     {isExpandable(value) && (
                       <div
                         className="mt-1"
@@ -481,7 +731,7 @@ const JsonTable: React.FC<JsonTableProps> = ({
                         }}
                       >
                         {shouldRenderContent &&
-                          renderNestedContent(value, valuePath)}
+                          renderNestedContent(value, valuePath, valueSegments)}
                       </div>
                     )}
                   </td>
@@ -496,8 +746,9 @@ const JsonTable: React.FC<JsonTableProps> = ({
 
   const renderArrayTable = (
     data: any[],
-    path: string = "root",
-    isNested: boolean = false,
+    path: string,
+    isNested: boolean,
+    segments: Segment[],
   ) => {
     // 全局搜索过滤
     let filteredItems = data.map((item, index) => ({ item, index }));
@@ -529,6 +780,8 @@ const JsonTable: React.FC<JsonTableProps> = ({
               const isExpanded =
                 isExpandable(item) && expandedPaths.has(itemPath);
               const shouldRenderContent = visibleContents.has(itemPath);
+              const itemSegments = [...segments, originalIndex];
+              const valueEdit = valueSpec(itemPath, itemSegments, item);
 
               return (
                 <tr
@@ -542,11 +795,12 @@ const JsonTable: React.FC<JsonTableProps> = ({
                     {originalIndex}
                   </td>
                   <td
-                    className="px-2 text-sm border border-input cursor-pointer"
+                    className={`px-2 text-sm border border-input ${valueEdit ? "cursor-text" : "cursor-pointer"} ${CELL_HIGHLIGHT}`}
                     style={{ minWidth: "30px" }}
-                    onClick={(e) => handleElementClick(itemPath, e)}
+                    {...cellProps(itemPath, valueEdit)}
                   >
-                    {renderCell(item, itemPath)}
+                    {(valueEdit && cellEditor(valueEdit)) ??
+                      renderCell(item, itemPath)}
                     {isExpandable(item) && (
                       <div
                         className="mt-1"
@@ -556,7 +810,7 @@ const JsonTable: React.FC<JsonTableProps> = ({
                         }}
                       >
                         {shouldRenderContent &&
-                          renderNestedContent(item, itemPath)}
+                          renderNestedContent(item, itemPath, itemSegments)}
                       </div>
                     )}
                   </td>
@@ -571,8 +825,9 @@ const JsonTable: React.FC<JsonTableProps> = ({
 
   const renderObjectsArrayTable = (
     data: any[],
-    path: string = "root",
-    isNested: boolean = false,
+    path: string,
+    isNested: boolean,
+    segments: Segment[],
   ) => {
     const keys = isNested ? getAllObjectKeys(data) : allKeys;
     const renderData = isNested ? data : (filteredData as any[]);
@@ -593,7 +848,7 @@ const JsonTable: React.FC<JsonTableProps> = ({
       : columnUniqueValues;
 
     if (keys.length === 0) {
-      return renderArrayTable(data, path, isNested);
+      return renderArrayTable(data, path, isNested, segments);
     }
 
     return (
@@ -618,31 +873,42 @@ const JsonTable: React.FC<JsonTableProps> = ({
                   columnFilters &&
                   columnFilters[key] &&
                   columnFilters[key].length < (uniqueValues[key]?.length || 0);
+                // 改列名会同时改这一列所有行里的同名键
+                const columnEdit: EditSpec = {
+                  id: `column:${headerPath}`,
+                  kind: "column",
+                  segments,
+                  key,
+                  original: key,
+                };
+                const columnEditor = cellEditor(columnEdit);
 
                 return (
                   <th
                     key={key}
-                    className={`${isHeaderSelected ? "!bg-border/60" : ""} px-2 text-left text-sm font-medium text-muted-foreground border border-input cursor-pointer`}
-                    onClick={(e) => handleElementClick(headerPath, e)}
+                    className={`${isHeaderSelected ? "!bg-border/60" : ""} px-2 text-left text-sm font-medium text-muted-foreground border border-input cursor-text ${CELL_HIGHLIGHT}`}
+                    {...cellProps(headerPath, columnEdit)}
                   >
-                    <div className="flex items-center gap-1">
-                      <span>{key}</span>
-                      {!isNested &&
-                        onColumnFilterChange &&
-                        uniqueValues[key] && (
-                          <ColumnFilterPopover
-                            allValues={uniqueValues[key]}
-                            columnKey={key}
-                            isActive={!!hasFilter}
-                            selectedValues={
-                              columnFilters?.[key]
-                                ? new Set(columnFilters[key])
-                                : new Set(uniqueValues[key])
-                            }
-                            onFilterChange={onColumnFilterChange}
-                          />
-                        )}
-                    </div>
+                    {columnEditor ?? (
+                      <div className="flex items-center gap-1">
+                        <span>{key}</span>
+                        {!isNested &&
+                          onColumnFilterChange &&
+                          uniqueValues[key] && (
+                            <ColumnFilterPopover
+                              allValues={uniqueValues[key]}
+                              columnKey={key}
+                              isActive={!!hasFilter}
+                              selectedValues={
+                                columnFilters?.[key]
+                                  ? new Set(columnFilters[key])
+                                  : new Set(uniqueValues[key])
+                              }
+                              onFilterChange={onColumnFilterChange}
+                            />
+                          )}
+                      </div>
+                    )}
                   </th>
                 );
               })}
@@ -679,6 +945,8 @@ const JsonTable: React.FC<JsonTableProps> = ({
                     const isExpanded =
                       isExpandable(value) && expandedPaths.has(cellPath);
                     const shouldRenderContent = visibleContents.has(cellPath);
+                    const cellSegments = [...segments, originalIndex, key];
+                    const valueEdit = valueSpec(cellPath, cellSegments, value);
 
                     if (
                       (hideEmpty && value === "") ||
@@ -699,11 +967,12 @@ const JsonTable: React.FC<JsonTableProps> = ({
                     return (
                       <td
                         key={key}
-                        className={`${isCellSelected ? "!bg-border/60" : ""} px-2 text-sm border border-input cursor-pointer`}
+                        className={`${isCellSelected ? "!bg-border/60" : ""} px-2 text-sm border border-input ${valueEdit ? "cursor-text" : "cursor-pointer"} ${CELL_HIGHLIGHT}`}
                         style={{ minWidth: "30px" }}
-                        onClick={(e) => handleElementClick(cellPath, e)}
+                        {...cellProps(cellPath, valueEdit)}
                       >
-                        {renderCell(value, cellPath)}
+                        {(valueEdit && cellEditor(valueEdit)) ??
+                          renderCell(value, cellPath)}
                         {isExpandable(value) && (
                           <div
                             className="mt-1"
@@ -713,7 +982,11 @@ const JsonTable: React.FC<JsonTableProps> = ({
                             }}
                           >
                             {shouldRenderContent &&
-                              renderNestedContent(value, cellPath)}
+                              renderNestedContent(
+                                value,
+                                cellPath,
+                                cellSegments,
+                              )}
                           </div>
                         )}
                       </td>
@@ -736,13 +1009,13 @@ const JsonTable: React.FC<JsonTableProps> = ({
     if (Array.isArray(data)) {
       if (isObjectArray(data)) {
         // 如果数组中的所有元素都是对象，则使用对象数组表格渲染
-        return renderObjectsArrayTable(data, "root", false);
+        return renderObjectsArrayTable(data, "root", false, []);
       } else {
         // 否则使用普通数组表格渲染
-        return renderArrayTable(data, "root", false);
+        return renderArrayTable(data, "root", false, []);
       }
     } else if (typeof data === "object") {
-      return renderObjectTable(data, "root");
+      return renderObjectTable(data, "root", []);
     } else {
       return (
         <div
@@ -764,12 +1037,14 @@ const JsonTable: React.FC<JsonTableProps> = ({
 
   return (
     <div className="h-full flex flex-col">
-      <JsonPathBar
-        currentPath={currentPath}
-        onCollapse={onCollapseAll}
-        onExpand={onExpandAll}
-      />
-      <div data-table-scroll className="flex-auto min-h-0 overflow-auto p-2">
+      <JsonPathBar currentPath={currentPath} />
+      <div
+        data-table-scroll
+        className="flex-auto min-h-0 overflow-auto p-2"
+        onMouseLeave={handleMouseLeave}
+        onFocus={handleMouseOver}
+        onMouseOver={handleMouseOver}
+      >
         {renderRootTable()}
       </div>
     </div>
